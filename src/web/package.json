@@ -1,0 +1,28 @@
+{
+  "name": "taskii-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tiptap/core": "^3.34.0",
+    "@tiptap/extension-bold": "^3.34.0",
+    "@tiptap/extension-code": "^3.34.0",
+    "@tiptap/extension-code-block": "^3.34.0",
+    "@tiptap/extension-italic": "^3.34.0",
+    "@tiptap/extension-link": "^3.34.0",
+    "@tiptap/extension-strike": "^3.34.0",
+    "@tiptap/extension-text": "^3.34.0",
+    "@tiptap/extensions": "^3.34.0",
+    "@tiptap/pm": "^3.34.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  }
+}

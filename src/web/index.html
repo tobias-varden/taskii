@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Taskii</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <button class="nav" id="prev" type="button" hidden title="Previous day (Alt+Left)" aria-label="Previous day">&lsaquo;</button>
+      <span class="date" id="date"></span>
+      <button class="nav" id="next" type="button" hidden title="Next day (Alt+Right)" aria-label="Next day">&rsaquo;</button>
+      <button class="btn" id="today" type="button" hidden>Today</button>
+      <span class="pill" id="readonly" hidden title="Past days are kept exactly as they were">read-only</span>
+      <span class="pill" id="carried" hidden title="Today has no file yet. It is created the first time you change something."></span>
+      <button class="filter" id="filter" type="button" hidden title="Showing only tasks with this tag. Click or press Esc to show all."></button>
+      <span class="spacer"></span>
+      <span class="status" id="status" role="status"></span>
+      <div class="menu-anchor">
+        <button class="btn quiet" id="folder" type="button" title="Data folder" aria-haspopup="true" hidden></button>
+        <div class="menu" id="folder-menu" hidden>
+          <div class="menu-label">Days are saved as markdown files in</div>
+          <div class="menu-path" id="folder-path"></div>
+          <button type="button" id="folder-open">Open folder</button>
+          <button type="button" id="folder-change">Change folder&hellip;</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="banner" id="conflict" hidden>
+      <span>This day was changed outside Taskii, probably by a sync from another device.</span>
+      <span class="spacer"></span>
+      <button class="btn" id="conflict-theirs" type="button" title="Discard what you changed here since then">Load that version</button>
+      <button class="btn" id="conflict-mine" type="button" title="Overwrite the file with what is on screen">Keep mine</button>
+    </div>
+
+    <main class="cols" id="cols" hidden>
+      <section class="col" aria-label="Todo">
+        <div class="lbl"><span>Todo</span><span class="hint" id="todo-hint"></span></div>
+        <div id="todo"></div>
+      </section>
+
+      <!-- One strip, always in the same place: it opens the backlog and closes it again. -->
+      <button class="rail" id="rail" type="button" aria-controls="backlog-col" aria-expanded="false">
+        <span class="chevron" aria-hidden="true">&rsaquo;</span>
+        <span class="v">Backlog</span>
+        <span class="count" id="rail-count">0</span>
+      </button>
+
+      <section class="col backlog" id="backlog-col" aria-label="Backlog">
+        <div class="lbl">
+          <span>Backlog</span>
+          <span class="hint" id="backlog-hint"></span>
+        </div>
+        <div id="backlog"></div>
+      </section>
+
+      <section class="board" id="board" aria-label="Notes"></section>
+    </main>
+
+    <div class="welcome" id="welcome" hidden>
+      <div class="welcome-card">
+        <h1>Welcome to Taskii</h1>
+        <p>
+          Taskii keeps one markdown file per day in a folder you choose. Put it somewhere OneDrive syncs and your days follow you
+          between machines.
+        </p>
+        <div class="welcome-actions">
+          <button class="btn primary" id="welcome-suggested" type="button" hidden></button>
+          <button class="btn" id="welcome-choose" type="button">Choose a folder&hellip;</button>
+        </div>
+        <p class="welcome-error" id="welcome-error" hidden></p>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
