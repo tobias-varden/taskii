@@ -2,6 +2,7 @@
 
 import type { Editor } from '@tiptap/core';
 import { BlockerPicker } from './blockerPicker';
+import { agesByKey } from './editor/ages';
 import { addBlocker, blockerOf, candidates, openTasks, setBlocker } from './editor/blocked';
 import { Originals } from './editor/convert';
 import { CardDrag, addCard, addSide, timeHeading } from './editor/board';
@@ -159,6 +160,9 @@ export class App {
       },
     });
 
+    viewState.noteAges = null;
+    void this.loadAges(day);
+
     // Todo was drawn before there was a backlog to look for blockers in.
     this.blockers = '';
     this.redrawBlocked();
@@ -193,6 +197,19 @@ export class App {
     } catch (error) {
       this.setStatus('Could not paste that image', 4000, true);
       throw error;
+    }
+  }
+
+  /** The ages come after the day itself: the first time, the shell has every day file to read for them. */
+  private async loadAges(day: DayDto): Promise<void> {
+    try {
+      const ages = await this.host.request('noteAges', { date: day.date });
+      if (this.day !== day) return;
+      viewState.noteAges = { date: day.date, today: this.today, since: agesByKey(ages) };
+      redraw(this.board);
+    } catch (error) {
+      // The board is as useful without them.
+      console.error(error);
     }
   }
 

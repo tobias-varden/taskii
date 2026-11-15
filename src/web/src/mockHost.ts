@@ -300,6 +300,18 @@ export function mockHost(): Host {
       case 'capture':
         console.debug('[mock host] captured', payload);
         return true;
+      case 'noteAges': {
+        // The first day each card and side note read as it does on this one.
+        const dates = [...days.keys()].sort().filter((date) => date <= payload.date);
+        const parts = (content: DayContent) =>
+          content.notes.flatMap((note) => [{ heading: note.heading, body: note.body }, ...note.sides.map((side) => ({ heading: '### ' + side.heading, body: side.body }))]);
+        const has = (date: string, part: { heading: string; body: string }) =>
+          parts(days.get(date)!.content).some((other) => other.heading === part.heading && other.body === part.body);
+        return parts(days.get(payload.date)?.content ?? { todo: [], backlog: [], notes: [] }).map((part) => ({
+          ...part,
+          since: dates.find((date) => has(date, part)) ?? payload.date,
+        }));
+      }
       case 'standup':
         return structuredClone(standup);
       case 'finishStandup':

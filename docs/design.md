@@ -84,7 +84,7 @@ With the backlog expanded it is a full column with the same layout as Todo, and 
 - A new card is started by typing in the empty space at the end of the board. A shortcut inserts a card with a timestamped heading such as `10:05 Sprint planning`.
 - A card is the unit for moving, collapsing and deleting. Cards are reordered by dragging.
 - A side note is a card docked to another card. It moves with its parent, can be edited or deleted on its own, and can be dragged off to become a normal card. It is created with a shortcut or by dragging a card onto another card's edge. On a wide board it sits to the right of its parent; on a narrow one it tucks underneath.
-- Each card shows its age, such as `today`, `3d` or `2w`, so stale notes are obvious.
+- Each card shows its age, such as `today`, `3d` or `2w`, so stale notes are obvious. The age is how long the card has read exactly as it does now, so editing one makes it `today` again. A card and each of its side notes age on their own.
 - Images are pasted from the clipboard into cards and task bodies.
 
 There is deliberately no free canvas. Positions are never stored. The board is a display of sections that are linear in the file.

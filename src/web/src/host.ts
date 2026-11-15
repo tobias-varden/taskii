@@ -12,6 +12,7 @@ import type {
   FolderResult,
   InitResult,
   ItemHistory,
+  NoteAgeDto,
   PeekResult,
   SaveResult,
   SearchRequest,
@@ -32,6 +33,9 @@ interface Requests {
   openLink: { payload: { url: string }; result: null };
   openDataFolder: { payload: undefined; result: null };
   flushed: { payload: undefined; result: null };
+
+  /** How long each card and side note of a day has been left alone. */
+  noteAges: { payload: { date: string }; result: NoteAgeDto[] };
 
   // Standup mode
   standup: { payload: undefined; result: StandupDto };

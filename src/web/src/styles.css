@@ -1692,3 +1692,17 @@ pre.su-line {
   padding: 3px 6px;
   font-size: 13px;
 }
+
+/* ---- note ages ---- */
+
+/* In the corner of the heading. The tools of the card take its place while the mouse is over it. */
+.age {
+  float: right;
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 21px;
+  color: var(--text-3);
+  user-select: none;
+  cursor: default;
+}

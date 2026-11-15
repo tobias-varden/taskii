@@ -95,3 +95,6 @@ public sealed record ItemHistory(
     IReadOnlyList<ItemDay> Days,
     IReadOnlyList<ItemVersion> Versions,
     IReadOnlyList<IReadOnlyList<RelatedItem>> Related);
+
+/// <summary>The first day a card, and each of its side notes, appears with the text it has now.</summary>
+public sealed record NoteSince(DateOnly Card, IReadOnlyList<DateOnly> Sides);

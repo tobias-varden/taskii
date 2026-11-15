@@ -229,6 +229,58 @@ public sealed class SearchIndexTests : IDisposable
     }
 
     [Fact]
+    public void A_note_is_as_old_as_the_text_it_has_now()
+    {
+        var commands = new NoteCard { Heading = "Useful commands", Body = "kubectl logs" };
+        Put(Mon, Day(notes: [commands, Planning]));
+        Put(Tue, Day(notes: [commands, Planning with { Body = "Edited on tuesday" }]));
+        Put(Thu, Day(notes: [commands]));
+        _index.Refresh();
+
+        var fresh = new NoteCard { Heading = "Typed just now" };
+        var thursday = _index.NotesSince([commands, fresh], Thu);
+        Assert.Equal([Mon, Thu], thursday.Select(note => note.Card));
+
+        // As it was then: on Tuesday the edited note was new, and Thursday had not happened.
+        var tuesday = _index.NotesSince([commands, Planning with { Body = "Edited on tuesday" }, Planning], Tue);
+        Assert.Equal([Mon, Tue, Mon], tuesday.Select(note => note.Card));
+        Assert.Equal([Mon], _index.NotesSince([commands], Mon).Select(note => note.Card));
+    }
+
+    [Fact]
+    public void A_card_and_its_side_notes_age_on_their_own()
+    {
+        var edge = new SideNote { Heading = "Edge cases", Body = "Email match must ignore case" };
+        var pr = new NoteCard { Heading = "Catalog search PR", Body = "Draft ready", Sides = [edge] };
+        Put(Mon, Day(notes: [pr]));
+        Put(Tue, Day(notes: [pr with { Sides = [edge with { Body = "Username must not" }, new SideNote { Heading = "Later" }] }]));
+        Put(Wed, Day(notes: [pr with { Body = "Merged", Sides = [edge] }, new NoteCard { Heading = "Edge cases", Body = "Email match must ignore case" }]));
+        _index.Refresh();
+
+        var tuesday = Assert.Single(_index.NotesSince([pr with { Sides = [edge with { Body = "Username must not" }, new SideNote { Heading = "Later" }] }], Tue));
+        Assert.Equal(Mon, tuesday.Card);
+        Assert.Equal([Tue, Tue], tuesday.Sides);
+
+        var wednesday = _index.NotesSince([pr with { Body = "Merged", Sides = [edge] }, new NoteCard { Heading = "Edge cases", Body = "Email match must ignore case" }], Wed);
+        Assert.Equal(Wed, wednesday[0].Card);
+        Assert.Equal([Mon], wednesday[0].Sides);
+        // A card is not a side note, whatever it says.
+        Assert.Equal(Wed, wednesday[1].Card);
+    }
+
+    [Fact]
+    public void Note_ages_forget_days_that_are_gone()
+    {
+        Put(Mon, Day(notes: [Planning]));
+        Put(Tue, Day(notes: [Planning]));
+        _index.Refresh();
+        File.Delete(_store.PathFor(Mon));
+        _index.Refresh();
+
+        Assert.Equal(Tue, Assert.Single(_index.NotesSince([Planning], Tue)).Card);
+    }
+
+    [Fact]
     public void Whatever_mentions_the_same_ticket_is_related()
     {
         var pr = new NoteCard { Heading = "Catalog search PR", Body = "Draft ready. [widget-service#413](https://github.com/owner/widget-service/pull/413)" };

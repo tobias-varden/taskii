@@ -12,6 +12,7 @@ import { TextSelection } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 import type { NoteDto, TaskDto } from '../types';
 import { Originals, docToNotes, docToTasks, notesToDoc, tasksToDoc, type NodeJSON } from './convert';
+import { Ages } from './ages';
 import { Blocked, type BlockedOptions } from './blocked';
 import { Board, type BoardOptions } from './board';
 import { Found, Ghost, Marks, UniqueIds, tagOf } from './decorations';
@@ -235,6 +236,11 @@ export function createBoardEditor(
       Side,
       ...shared({ promote: hooks.promote }),
       Board.configure({ onGrab: hooks.onGrab }),
+      // Read the same way the day is saved, so an untouched note is known by the text it was loaded with.
+      Ages.configure({
+        heading: (title) => originals.inlineText((title.toJSON() as NodeJSON).content),
+        body: (body) => originals.bodyText((body.toJSON() as NodeJSON).content),
+      }),
       Ghost.configure({
         label: 'Type here to start a new card',
         add: (editor) =>

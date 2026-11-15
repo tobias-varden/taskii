@@ -99,6 +99,15 @@ export interface CaptureContext {
   tasks: CaptureTask[];
 }
 
+/** A card or side note as it is in the day file, and the first day it read like that. */
+export interface NoteAgeDto {
+  /** Markdown. A side note's starts with "### ", as in the file. */
+  heading: string;
+  body: string;
+  /** yyyy-MM-dd */
+  since: string;
+}
+
 /** The last standup that was finished. Both are null when there has been none. */
 export interface StandupDto {
   /** When it was finished, local time, written like the time on a done task: 2026-11-13T09:15. */

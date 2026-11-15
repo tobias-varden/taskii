@@ -49,6 +49,9 @@ public sealed record CaptureContext(bool Ready, string AssetBase, IReadOnlyList<
 /// <param name="Baseline">The day as it was at that moment.</param>
 public sealed record StandupDto(string? Since, DayContent? Baseline);
 
+/// <summary>A note or side note as it is in the day file, and the first day it read like that.</summary>
+public sealed record NoteAgeDto(string Heading, string Body, string Since);
+
 /// <summary>What a search found, and the tags there are to narrow it by.</summary>
 public sealed record SearchResponse(IReadOnlyList<SearchHit> Hits, int Total, int Days, IReadOnlyList<string> Tags);
 
@@ -155,6 +158,12 @@ public sealed class HostBridge(SettingsStore settings, TimeProvider? time = null
                 var body = payload.GetProperty("body").GetString() ?? "";
                 var taskId = payload.TryGetProperty("taskId", out var id) ? id.GetString() ?? "" : "";
                 return await CaptureAsync(kind, title, body, taskId);
+            }
+
+            case "noteAges":
+            {
+                var date = ReadDate(payload);
+                return await Task.Run(() => NoteAges(date));
             }
 
             case "standup":
@@ -305,6 +314,29 @@ public sealed class HostBridge(SettingsStore settings, TimeProvider? time = null
         _indexStale = true;
         AfterOutsideEdit?.Invoke();
         return changed;
+    }
+
+    /// <summary>
+    /// How long each card and side note of a day has been left alone. Asked for after the day
+    /// is on screen, because the very first time the index has every day file to read.
+    /// </summary>
+    private List<NoteAgeDto> NoteAges(DateOnly date)
+    {
+        var notes = Store.Load(date, carry: date == Today).File.Content.Notes;
+        var since = FreshIndex().NotesSince(notes, date);
+
+        var ages = new List<NoteAgeDto>();
+        for (var i = 0; i < notes.Count; i++)
+        {
+            ages.Add(new NoteAgeDto(notes[i].Heading, notes[i].Body, Format(since[i].Card)));
+            for (var s = 0; s < notes[i].Sides.Count; s++)
+            {
+                // A side note says so in its heading, as the file does, so it is never taken for a card with the same text.
+                ages.Add(new NoteAgeDto("### " + notes[i].Sides[s].Heading, notes[i].Sides[s].Body, Format(since[i].Sides[s])));
+            }
+        }
+
+        return ages;
     }
 
     private StandupDto LastStandup() =>

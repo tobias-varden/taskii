@@ -23,7 +23,7 @@ namespace Taskii.Core.Search;
 public sealed class SearchIndex : IDisposable
 {
     /// <summary>Raised whenever the tables change shape, which rebuilds the index from the files.</summary>
-    private const int Schema = 2;
+    private const int Schema = 3;
 
     /// <summary>How many related items are worth listing.</summary>
     private const int MaxRelated = 8;
@@ -91,6 +91,7 @@ public sealed class SearchIndex : IDisposable
             foreach (var gone in known.Keys)
             {
                 Run(db, "DELETE FROM occ WHERE date = $date", ("$date", gone));
+                Run(db, "DELETE FROM parts WHERE date = $date", ("$date", gone));
                 Run(db, "DELETE FROM days WHERE date = $date", ("$date", gone));
             }
 
@@ -319,6 +320,28 @@ public sealed class SearchIndex : IDisposable
         return [.. related.Where(item => seen.Add(item.Kind == ItemKind.Note ? "n " + item.Title : item.Key)).Take(MaxRelated)];
     }
 
+    /// <summary>
+    /// Since when each note of a day has read as it does: the first day its card, and each
+    /// of its side notes, appears with exactly this text. An edited note is a new one, so
+    /// this is how long it has been left alone. One that is in no day file yet is from
+    /// <paramref name="date"/> itself.
+    /// </summary>
+    /// <param name="date">The day the notes are on. Later days are not looked at.</param>
+    public IReadOnlyList<NoteSince> NotesSince(IReadOnlyList<NoteCard> notes, DateOnly date)
+    {
+        lock (_gate)
+        {
+            var db = Open();
+            DateOnly First(string hash)
+            {
+                using var command = Command(db, "SELECT MIN(date) FROM parts WHERE hash = $hash AND date <= $date", ("$hash", hash), ("$date", Format(date)));
+                return command.ExecuteScalar() is string first ? Parse(first) : date;
+            }
+
+            return [.. notes.Select(note => new NoteSince(First(CardHash(note)), [.. note.Sides.Select(side => First(SideHash(side)))]))];
+        }
+    }
+
     /// <summary>Every tag a task has had, most used first.</summary>
     public IReadOnlyList<string> Tags()
     {
@@ -370,6 +393,7 @@ public sealed class SearchIndex : IDisposable
     private static void Write(SqliteConnection db, string date, DayContent day)
     {
         Run(db, "DELETE FROM occ WHERE date = $date", ("$date", date));
+        Run(db, "DELETE FROM parts WHERE date = $date", ("$date", date));
 
         foreach (var (section, tasks) in new[] { ("todo", day.Todo), ("backlog", day.Backlog) })
         {
@@ -396,8 +420,18 @@ public sealed class SearchIndex : IDisposable
             var body = string.Join('\n', new[] { note.Body }.Concat(note.Sides.SelectMany(side => new[] { side.Heading, side.Body })).Where(part => part.Length > 0));
             var refs = TicketRefs.In(note.Heading + '\n' + body).Select(ticket => TicketPrefix + ticket);
             Add(db, date, key, key, ItemKind.Note, null, false, note.Heading, body, new ItemVersion("notes", null, note), refs);
+
+            // A card and its side notes each age on their own: adding to a side note does not make the card new.
+            foreach (var part in new[] { CardHash(note) }.Concat(note.Sides.Select(SideHash)))
+            {
+                Run(db, "INSERT OR IGNORE INTO parts(hash, date) VALUES ($hash, $date)", ("$hash", part), ("$date", date));
+            }
         }
     }
+
+    private static string CardHash(NoteCard note) => Hash(DayFormat.Card(note));
+
+    private static string SideHash(SideNote side) => Hash(DayFormat.Side(side));
 
     private static void Add(SqliteConnection db, string date, string key, string hash, ItemKind kind, string? tag, bool done, string title, string body, ItemVersion version, IEnumerable<string> refs)
     {
@@ -465,6 +499,7 @@ public sealed class SearchIndex : IDisposable
                     DROP TABLE IF EXISTS versions;
                     DROP TABLE IF EXISTS fts;
                     DROP TABLE IF EXISTS refs;
+                    DROP TABLE IF EXISTS parts;
 
                     CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
 
@@ -487,6 +522,10 @@ public sealed class SearchIndex : IDisposable
                     -- What each state points at: 'b:' and the ID of the task it is blocked by, or 'k:' and a ticket it mentions.
                     CREATE TABLE refs(ref TEXT NOT NULL, hash TEXT NOT NULL, PRIMARY KEY (ref, hash)) WITHOUT ROWID;
                     CREATE INDEX refs_hash ON refs(hash);
+
+                    -- The days each card and each side note appears on, by the text of that part alone.
+                    CREATE TABLE parts(hash TEXT NOT NULL, date TEXT NOT NULL, PRIMARY KEY (hash, date)) WITHOUT ROWID;
+                    CREATE INDEX parts_date ON parts(date);
 
                     PRAGMA user_version = {Schema};
                     """);
