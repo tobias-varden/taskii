@@ -111,7 +111,7 @@ Standup mode is a read-through view for the daily standup. It covers everything 
 
 Two actions:
 
-- **Finish standup** records the time. Done tasks completed before that moment stop carrying forward. This replaces the manual pruning.
+- **Finish standup** records the time. Done tasks completed before that moment stop carrying forward. This replaces the manual pruning. A standup takes nothing from the day it is finished on: what was reported stays in today's list, struck through, and is gone from the next day.
 - **Copy as text** puts the summary on the clipboard as plain text, for standups held in chat.
 
 ### Quick capture
@@ -175,10 +175,13 @@ A folder chosen by the user, expected to be inside OneDrive. Proposed layout:
       2026-11-16.md
   assets/
     3fa9c1d2e7.png
+  standups/
+    2026-11-16T0915.md
 ```
 
 - One markdown file per day that was edited. Only today's file is ever written, which keeps sync conflicts rare.
 - Images are stored once in `assets`, named by a hash of their content, so carrying a note forward does not duplicate the image.
+- Finishing a standup saves a copy of today's file as `standups/2026-11-16T0915.md`, named by the minute it was finished. The newest one says when done tasks were last reported, and is what "new since the last standup" is compared against. It syncs with the rest of the folder.
 
 ### Day file format
 
@@ -248,7 +251,6 @@ The main technical risk is the round trip between the editor's document and mark
 ## Open questions
 
 - **Hotkeys.** The global hotkeys for quick capture and for opening the main window, and the in-app shortcuts for blocked-by, promote to task, move to backlog, new side note and timestamped heading, are not chosen.
-- **Standup state.** Where the time of the last finished standup is stored so that it syncs between machines, and what "new since last standup" is compared against. One option is saving a copy of the day file at the moment the standup is finished.
 - **Editing the past.** Past days are read-only. Whether there should be a deliberate way to correct one is undecided.
 - **Sync conflicts.** What to do when OneDrive produces a conflict copy of today's file, for example after editing on two machines.
 - **Related items in search.** Which notes count as related to a task, beyond its blocker and notes mentioning the same ticket, is not settled.

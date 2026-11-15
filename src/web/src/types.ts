@@ -99,6 +99,14 @@ export interface CaptureContext {
   tasks: CaptureTask[];
 }
 
+/** The last standup that was finished. Both are null when there has been none. */
+export interface StandupDto {
+  /** When it was finished, local time, written like the time on a done task: 2026-11-13T09:15. */
+  since: string | null;
+  /** The day as it was at that moment. */
+  baseline: DayContent | null;
+}
+
 export type CaptureKind = 'todo' | 'backlog' | 'note' | 'append';
 
 export type ItemKind = 'task' | 'note';

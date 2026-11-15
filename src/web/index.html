@@ -36,13 +36,23 @@
         <button class="nav" id="search-back" type="button" title="Back to the day" aria-label="Back to the day">&larr;</button>
         <span class="date">Search</span>
       </div>
+      <div class="standup-nav">
+        <button class="nav" id="standup-back" type="button" title="Back to the day (Esc)" aria-label="Back to the day">&larr;</button>
+        <span class="date">Standup</span>
+        <span class="when" id="standup-when"></span>
+      </div>
       <label class="search" id="search-box" hidden>
         <input id="search" type="text" placeholder="Search all days" title="Search all days (Ctrl+F)" autocomplete="off" spellcheck="false" />
         <span class="n" id="search-count" role="status"></span>
       </label>
       <span class="spacer"></span>
       <span class="status" id="status" role="status"></span>
-      <div class="menu-anchor">
+      <button class="btn" id="standup" type="button" hidden title="Read out what happened since the last standup (Ctrl+Shift+S)">Standup</button>
+      <div class="standup-actions">
+        <button class="btn" id="standup-copy" type="button" title="Put the summary on the clipboard as plain text">Copy as text</button>
+        <button class="btn primary" id="standup-finish" type="button" title="Record that this has been reported. Done tasks stop carrying forward. (Ctrl+Enter)">Finish standup</button>
+      </div>
+      <div class="menu-anchor" id="folder-anchor">
         <button class="btn quiet" id="folder" type="button" title="Data folder" aria-haspopup="true" hidden></button>
         <div class="menu" id="folder-menu" hidden>
           <div class="menu-label">Days are saved as markdown files in</div>
@@ -82,6 +92,10 @@
       </section>
 
       <section class="board" id="board" aria-label="Notes"></section>
+    </main>
+
+    <main class="standup-view" id="standup-view" tabindex="-1" hidden>
+      <div class="standup" id="standup-sheet"></div>
     </main>
 
     <main class="search-view" id="search-view" hidden>

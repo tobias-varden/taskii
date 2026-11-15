@@ -37,6 +37,9 @@ public sealed class DayStore(string root)
 
     public string Root { get; } = Path.GetFullPath(root);
 
+    /// <summary>The standups finished in this data folder.</summary>
+    public StandupLog Standups { get; } = new(root);
+
     public string PathFor(DateOnly date) => Path.Combine(
         Root,
         date.Year.ToString("0000", CultureInfo.InvariantCulture),
@@ -61,7 +64,7 @@ public sealed class DayStore(string root)
     public string VersionOf(DateOnly date, bool carry = false)
     {
         if (ReadBytes(PathFor(date)) is { } bytes) return VersionOf(bytes);
-        return carry && LatestBefore(date) is { } from && ReadBytes(PathFor(from)) is { } source ? CarriedVersion(source) : "";
+        return carry && LatestBefore(date) is { } from && ReadBytes(PathFor(from)) is { } source ? CarriedVersion(source, ReportedBefore(date)) : "";
     }
 
     /// <summary>
@@ -134,14 +137,24 @@ public sealed class DayStore(string root)
         if (LatestBefore(date) is not { } from || ReadBytes(PathFor(from)) is not { } bytes) return (DayFile.Empty, "", null);
 
         var source = Parse(bytes);
-        var carried = DayFile.Parse(source.Write(DayCarry.Forward(source.Content)));
-        return (carried, CarriedVersion(bytes), from);
+        var standup = ReportedBefore(date);
+        var carried = DayFile.Parse(source.Write(DayCarry.Forward(source.Content, standup)));
+        return (carried, CarriedVersion(bytes, standup), from);
     }
+
+    /// <summary>
+    /// The standup that decides which done tasks a day starts without: the last one finished
+    /// before the day began. A standup finished during the day takes nothing away from it, so
+    /// what was reported this morning stays in sight, struck through, until tomorrow.
+    /// </summary>
+    private DateTime? ReportedBefore(DateOnly date) => Standups.LatestBefore(date.ToDateTime(TimeOnly.MinValue));
 
     private static DayFile Parse(byte[] bytes) => DayFile.Parse(Utf8.GetString(bytes));
 
-    // Marked, so "based on Friday's file" can never be mistaken for "is Friday's file".
-    private static string CarriedVersion(byte[] source) => "~" + VersionOf(source);
+    // Marked, so "based on Friday's file" can never be mistaken for "is Friday's file". What
+    // is carried also depends on the last standup, so that is part of it.
+    private static string CarriedVersion(byte[] source, DateTime? standup) =>
+        "~" + VersionOf(source) + (standup is { } at ? "@" + at.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture) : "");
 
     /// <summary>Every day that has a file, oldest first.</summary>
     public IReadOnlyList<DateOnly> ListDays()

@@ -16,6 +16,7 @@ import type {
   SaveResult,
   SearchRequest,
   SearchResponse,
+  StandupDto,
 } from './types';
 
 interface Requests {
@@ -31,6 +32,11 @@ interface Requests {
   openLink: { payload: { url: string }; result: null };
   openDataFolder: { payload: undefined; result: null };
   flushed: { payload: undefined; result: null };
+
+  // Standup mode
+  standup: { payload: undefined; result: StandupDto };
+  /** Records that today, as it is on disk, has been reported. Returns the standup just finished. */
+  finishStandup: { payload: undefined; result: StandupDto };
 
   // Search across all days
   search: { payload: SearchRequest; result: SearchResponse };

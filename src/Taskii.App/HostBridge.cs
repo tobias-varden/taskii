@@ -44,6 +44,11 @@ public sealed record CaptureTask(string Id, string Title, bool Backlog);
 /// <param name="Ready">False until a data folder has been chosen.</param>
 public sealed record CaptureContext(bool Ready, string AssetBase, IReadOnlyList<CaptureTag> Tags, IReadOnlyList<CaptureTask> Tasks);
 
+/// <summary>The last standup that was finished. Both are null when there has been none.</summary>
+/// <param name="Since">When it was finished, local time, written like the time on a done task: 2026-11-13T09:15.</param>
+/// <param name="Baseline">The day as it was at that moment.</param>
+public sealed record StandupDto(string? Since, DayContent? Baseline);
+
 /// <summary>What a search found, and the tags there are to narrow it by.</summary>
 public sealed record SearchResponse(IReadOnlyList<SearchHit> Hits, int Total, int Days, IReadOnlyList<string> Tags);
 
@@ -76,6 +81,7 @@ public sealed class HostBridge(SettingsStore settings, TimeProvider? time = null
     private const int MaxAssetBytes = 25 * 1024 * 1024;
 
     private const string DateFormat = "yyyy-MM-dd";
+    private const string StampFormat = "yyyy-MM-dd'T'HH:mm";
     private readonly TimeProvider _time = time ?? TimeProvider.System;
     private DayStore? _store;
 
@@ -150,6 +156,12 @@ public sealed class HostBridge(SettingsStore settings, TimeProvider? time = null
                 var taskId = payload.TryGetProperty("taskId", out var id) ? id.GetString() ?? "" : "";
                 return await CaptureAsync(kind, title, body, taskId);
             }
+
+            case "standup":
+                return await Task.Run(LastStandup);
+
+            case "finishStandup":
+                return await Task.Run(FinishStandup);
 
             case "search":
             {
@@ -293,6 +305,22 @@ public sealed class HostBridge(SettingsStore settings, TimeProvider? time = null
         _indexStale = true;
         AfterOutsideEdit?.Invoke();
         return changed;
+    }
+
+    private StandupDto LastStandup() =>
+        Store.Standups.Latest() is { } last
+            ? new StandupDto(last.At.ToString(StampFormat, CultureInfo.InvariantCulture), last.Content)
+            : new StandupDto(null, null);
+
+    /// <summary>
+    /// Records that everything up to now has been reported. The page has written what it had
+    /// pending before asking, so the day on disk is the day that was read out.
+    /// </summary>
+    private StandupDto FinishStandup()
+    {
+        var day = Store.Load(Today, carry: true);
+        Store.Standups.Finish(_time.GetLocalNow().DateTime, day.File.Text);
+        return LastStandup();
     }
 
     private InitResult Init()

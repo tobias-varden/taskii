@@ -11,6 +11,7 @@ import { Calendar } from './calendar';
 import { formatDate } from './dates';
 import type { Host } from './host';
 import { SearchView } from './search';
+import { StandupView } from './standup';
 import type { DayContent, DayDto } from './types';
 
 /** How long after the last keystroke the day is written. */
@@ -54,6 +55,7 @@ export class App {
 
   private readonly search: SearchView;
   private readonly calendar: Calendar;
+  private readonly standup: StandupView;
 
   constructor(private readonly host: Host) {
     this.calendar = new Calendar({
@@ -68,6 +70,16 @@ export class App {
       // The day underneath is still there; only another one needs loading.
       openDay: (date) => date !== this.day?.date && void this.open(date),
       openLink: (url) => void this.host.request('openLink', { url }),
+    });
+    this.standup = new StandupView(host, {
+      today: () => this.today,
+      content: () => this.read(),
+      flush: () => this.flush(),
+      openLink: (url) => void this.host.request('openLink', { url }),
+      left: (finished) => {
+        if (finished) this.setStatus('Standup finished', 4000);
+        this.todo?.commands.focus();
+      },
     });
   }
 
@@ -144,6 +156,10 @@ export class App {
     $<HTMLButtonElement>('next').disabled = !day.next;
     $('today').hidden = day.date === this.today;
     $('readonly').hidden = day.editable;
+    $('standup').hidden = !day.editable;
+    // Today changed underneath the standup; any other day is not one to stand up about.
+    if (day.editable) void this.standup.refresh();
+    else this.standup.leave();
     $('carried').hidden = !day.carriedFrom;
     $('carried').textContent = day.carriedFrom ? `continued from ${formatDate(day.carriedFrom)}` : '';
     this.setStatus('');
@@ -171,6 +187,15 @@ export class App {
     chip.textContent = tag ? `${tag} \u2715` : '';
     redraw(this.todo);
     redraw(this.backlog);
+  }
+
+  /** Standup mode is about today, as it is right now. */
+  private async openStandup(): Promise<void> {
+    if (!this.day?.editable || this.standup.active) return;
+    this.search.leave();
+    this.calendar.close();
+    await this.flush();
+    if (this.day?.editable) await this.standup.enter();
   }
 
   private async open(date: string): Promise<void> {
@@ -312,6 +337,7 @@ export class App {
     $('rail').addEventListener('click', () => setBacklog(!backlogOpen()));
 
     $('filter').addEventListener('click', () => this.setFilter(null));
+    $('standup').addEventListener('click', () => void this.openStandup());
 
     $('conflict-theirs').addEventListener('click', async () => {
       if (!this.day) return;
@@ -342,7 +368,19 @@ export class App {
     document.addEventListener('keydown', (event) => {
       if (event.ctrlKey && !event.altKey && !event.shiftKey && (event.key === 'f' || event.key === 'k') && this.day) {
         event.preventDefault();
+        this.standup.leave();
         this.search.focus();
+        return;
+      }
+      if (event.ctrlKey && event.shiftKey && !event.altKey && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        if (this.standup.active) this.standup.leave();
+        else void this.openStandup();
+        return;
+      }
+      // Standup mode is for reading; the day's shortcuts wait until it is left.
+      if (this.standup.active) {
+        this.standup.handleKey(event);
         return;
       }
       // Search has the window to itself; the day's shortcuts wait until it is left.

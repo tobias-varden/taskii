@@ -5,7 +5,8 @@
 import { tagOf } from './editor/decorations';
 import type { Host } from './host';
 import { finder, termsOf } from './search';
-import type { DayContent, DayDto, ItemHistory, ItemVersion, RelatedItem, SearchHit, SearchRequest, SearchResponse } from './types';
+import { localStamp } from './editor/ids';
+import type { DayContent, DayDto, ItemHistory, ItemVersion, RelatedItem, SearchHit, SearchRequest, SearchResponse, StandupDto } from './types';
 
 const iso = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
@@ -238,6 +239,12 @@ export function mockHost(): Host {
   let folder: string | null = params.has('first-run') ? null : 'C:\\Users\\you\\OneDrive\\Taskii';
   let collide = params.has('conflict');
 
+  // The last standup was three days ago, so there is something new to read out. `?no-standup` is the first one ever.
+  const then = [...days.keys()].sort().at(-4)!;
+  let standup: StandupDto = params.has('no-standup')
+    ? { since: null, baseline: null }
+    : { since: `${then}T09:15`, baseline: structuredClone(days.get(then)!.content) };
+
   const load = (date: string): DayDto => {
     const day = days.get(date);
     const dates = [...days.keys()].sort();
@@ -293,6 +300,11 @@ export function mockHost(): Host {
       case 'capture':
         console.debug('[mock host] captured', payload);
         return true;
+      case 'standup':
+        return structuredClone(standup);
+      case 'finishStandup':
+        standup = { since: localStamp(), baseline: structuredClone(days.get(today)!.content) };
+        return structuredClone(standup);
       case 'search':
         return search(days, payload);
       case 'searchItem':

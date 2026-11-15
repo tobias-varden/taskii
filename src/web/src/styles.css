@@ -1400,3 +1400,196 @@ mark {
 .rel-more {
   color: var(--text-3);
 }
+
+/* ---- standup ---- */
+
+.standup-nav,
+.standup-actions {
+  display: none;
+  align-items: center;
+  gap: 12px;
+}
+
+.standup-mode .standup-nav,
+.standup-mode .standup-actions {
+  display: flex;
+}
+
+/* Standup mode has the window to itself, as search does. */
+.standup-mode .day-nav,
+.standup-mode .cols,
+.standup-mode .search,
+.standup-mode #folder-anchor,
+.standup-mode #standup,
+.searching #standup {
+  display: none;
+}
+
+.standup-nav .when {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.standup-view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  outline: 0;
+}
+
+.standup {
+  max-width: 860px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 18px 24px 28px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.su-sec {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0 4px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.su-sec:first-child {
+  margin-top: 0;
+}
+
+.su-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.su-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.su-box {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  border: 1px solid var(--border-3);
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.su-box.done {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-color: var(--ok-border);
+}
+
+.su-box.sub {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  margin: 0 6px 0 0;
+  border-radius: 4px;
+  font-size: 10px;
+  vertical-align: -2px;
+}
+
+.su-tag {
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  padding: 0 5px;
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.su-blocked {
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+
+.su-hint {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.su-none,
+.su-empty {
+  color: var(--text-3);
+}
+
+.su-body {
+  margin: 0 0 4px 8px;
+  padding-left: 24px;
+  border-left: 1px solid var(--border);
+  color: var(--text-2);
+}
+
+.su-line {
+  margin: 0;
+  padding-left: calc(var(--indent, 0) * var(--indent-step));
+  overflow-wrap: anywhere;
+}
+
+/* What was written since the last standup: the part to say out loud. */
+.su-line.new {
+  margin-left: -25px;
+  padding-left: calc(23px + var(--indent, 0) * var(--indent-step));
+  border-left: 2px solid var(--accent);
+  color: var(--text);
+}
+
+.su-line.checked > span:last-child {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+
+.su-bullet {
+  display: inline-block;
+  width: 14px;
+  color: var(--text-3);
+}
+
+pre.su-line {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  font: 13px/1.45 'Cascadia Mono', Consolas, monospace;
+  white-space: pre-wrap;
+}
+
+.su-line img {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  margin: 4px 0;
+  border-radius: 6px;
+}
+
+.standup a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.standup a:hover {
+  text-decoration: underline;
+}
+
+.standup code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--surface-alt);
+  font: 13px 'Cascadia Mono', Consolas, monospace;
+}
