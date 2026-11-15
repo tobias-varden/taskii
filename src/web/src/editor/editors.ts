@@ -12,6 +12,7 @@ import { TextSelection } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 import type { NoteDto, TaskDto } from '../types';
 import { Originals, docToNotes, docToTasks, notesToDoc, tasksToDoc, type NodeJSON } from './convert';
+import { Blocked, type BlockedOptions } from './blocked';
 import { Board, type BoardOptions } from './board';
 import { Found, Ghost, Marks, UniqueIds, tagOf } from './decorations';
 import { Grips, type DropIndex, type GripOptions } from './drag';
@@ -42,6 +43,7 @@ export interface TaskHooks extends EditorHooks {
   send: KeysOptions['send'];
   onGrab: GripOptions['onGrab'];
   onTagClick: (tag: string) => void;
+  blocked: BlockedOptions;
 }
 
 /** What every editor has: text, bodies, marks, undo and the keyboard rules. */
@@ -203,6 +205,7 @@ export function createTaskEditor(
       UniqueIds.configure({ taken: hooks.takenIds }),
       Fold,
       TagSuggest.configure({ tags: hooks.tags }),
+      Blocked.configure(hooks.blocked),
       Grips.configure({ onGrab: hooks.onGrab }),
       Ghost.configure({
         label: 'New task',

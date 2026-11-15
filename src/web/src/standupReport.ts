@@ -74,7 +74,7 @@ export function buildReport(day: DayContent, last: StandupDto): Report {
   for (const task of baseline?.backlog ?? []) if (!before.has(task.id)) before.set(task.id, { task, backlog: true });
 
   const open = new Map<string, TaskDto>();
-  for (const task of [...day.todo, ...day.backlog]) if (!task.done && task.id) open.set(task.id, task);
+  for (const task of [...day.todo, ...day.backlog]) if (!task.done && task.id && task.title.trim()) open.set(task.id, task);
 
   const report: Report = { since, done: [], working: [], blocked: [] };
 

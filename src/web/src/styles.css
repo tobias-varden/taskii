@@ -1593,3 +1593,102 @@ pre.su-line {
   background: var(--surface-alt);
   font: 13px 'Cascadia Mono', Consolas, monospace;
 }
+
+/* ---- blocked by ---- */
+
+/* Waiting for something else: still there, but not what to pick up next. */
+.task.blocked > .task-title,
+.task.blocked > .body {
+  color: var(--text-3);
+}
+
+.blocked-by {
+  margin-left: 8px;
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  user-select: none;
+  /* One piece: a long one moves to the next line whole, and is cut short before it is broken. */
+  display: inline-block;
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.cols:not(.readonly) .blocked-by {
+  cursor: pointer;
+}
+
+.picker {
+  position: fixed;
+  z-index: 30;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.picker input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  outline: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+.picker input::placeholder {
+  color: var(--text-3);
+}
+
+.picker-list {
+  padding-top: 4px;
+  user-select: none;
+}
+
+.picker-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.picker-row.active,
+.picker-row:hover {
+  background: var(--surface-alt);
+}
+
+.picker-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-more,
+.picker-quiet,
+.picker-none {
+  color: var(--text-3);
+}
+
+.picker-more {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.picker-none {
+  padding: 3px 6px;
+  font-size: 13px;
+}

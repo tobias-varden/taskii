@@ -1,6 +1,8 @@
 // The page: which day is shown, when it is saved, and the chrome around the editors.
 
 import type { Editor } from '@tiptap/core';
+import { BlockerPicker } from './blockerPicker';
+import { addBlocker, blockerOf, candidates, openTasks, setBlocker } from './editor/blocked';
 import { Originals } from './editor/convert';
 import { CardDrag, addCard, addSide, timeHeading } from './editor/board';
 import { TaskDrag } from './editor/drag';
@@ -52,6 +54,9 @@ export class App {
   );
 
   private readonly cardDrag = new CardDrag();
+  private readonly picker = new BlockerPicker();
+  /** The open tasks as they were when the "blocked by" labels were last drawn. */
+  private blockers = '';
 
   private readonly search: SearchView;
   private readonly calendar: Calendar;
@@ -100,9 +105,11 @@ export class App {
   // ---- showing a day ----
 
   private show(day: DayDto): void {
+    this.picker.close();
     this.todo?.destroy();
     this.backlog?.destroy();
     this.board?.destroy();
+    this.todo = this.backlog = this.board = undefined;
 
     this.day = day;
     this.version = day.version;
@@ -122,6 +129,11 @@ export class App {
       tags: () => collectTags(this.todo, this.backlog),
       onGrab: (event: PointerEvent, editor: Editor, id: string) => this.drag.start(event, editor, id),
       onTagClick: (tag: string) => this.setFilter(viewState.filter === tag ? null : tag),
+      blocked: {
+        // The task being waited for can be in either column.
+        openTitle: (id: string) => this.openTasks().find((task) => task.id === id)?.title ?? null,
+        pick: (editor: Editor, id: string) => this.pickBlocker(editor, id),
+      },
     };
     // Fresh editors for every day, so undo can never reach back into a different one.
     // Alt+Shift+Right sends a task to the top of the backlog, Alt+Shift+Left to the end of Todo.
@@ -146,6 +158,10 @@ export class App {
         return true;
       },
     });
+
+    // Todo was drawn before there was a backlog to look for blockers in.
+    this.blockers = '';
+    this.redrawBlocked();
 
     $('welcome').hidden = true;
     $('cols').hidden = false;
@@ -178,6 +194,39 @@ export class App {
       this.setStatus('Could not paste that image', 4000, true);
       throw error;
     }
+  }
+
+  private openTasks() {
+    return [...openTasks(this.todo), ...openTasks(this.backlog)];
+  }
+
+  /** A task being checked off or renamed in one column changes what is blocked in the other. */
+  private redrawBlocked(): void {
+    const now = JSON.stringify(this.openTasks().map((task) => [task.id, task.title]));
+    if (now === this.blockers) return;
+    this.blockers = now;
+    redraw(this.todo);
+    redraw(this.backlog);
+  }
+
+  /** Asks what a task is waiting for, under its title. */
+  private pickBlocker(editor: Editor, taskId: string): void {
+    let at: { pos: number; current: string | null } | undefined;
+    editor.state.doc.forEach((node, pos) => {
+      if (node.attrs.id === taskId) at = { pos, current: blockerOf(node.attrs.fields) };
+    });
+    if (!at || !editor.isEditable) return;
+
+    const inBacklog = new Set(taskIds(this.backlog));
+    const title = editor.view.coordsAtPos(at.pos + 2);
+    this.picker.open({
+      anchor: { left: title.left, bottom: title.bottom },
+      tasks: candidates(taskId, this.openTasks()).map((task) => ({ id: task.id, title: task.title, backlog: inBacklog.has(task.id) })),
+      current: at.current,
+      choose: (id) => setBlocker(editor, taskId, id),
+      create: (name) => addBlocker(editor, taskId, name, [...taskIds(this.todo), ...taskIds(this.backlog)]),
+      closed: () => editor.view.focus(),
+    });
   }
 
   private setFilter(tag: string | null): void {
@@ -226,6 +275,7 @@ export class App {
     this.dirty = true;
     this.lastEdit = Date.now();
     this.updateCounts();
+    this.redrawBlocked();
     this.scheduleSave(SAVE_DELAY);
   }
 

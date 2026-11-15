@@ -73,9 +73,10 @@ With the backlog expanded it is a full column with the same layout as Todo, and 
 
 #### Blocked by
 
-- On a task, a shortcut opens a picker of open tasks. Picking one, or typing a new title, marks the current task as blocked by it. A new blocker is created directly above the blocked task.
+- On a task, Alt+B opens a picker of open tasks. Picking one, or typing a new title, marks the current task as blocked by it. A new blocker is created directly above the blocked task.
 - A blocked task is dimmed and shows a "blocked by" label.
-- Checking off the blocker unblocks the task automatically.
+- Checking off the blocker unblocks the task automatically. Nothing is rewritten for that: the `blocked-by` field stays on the task, and a task counts as blocked only while the task it points at is open. Unchecking the blocker blocks it again.
+- Clicking the label, or Alt+B again, changes the blocker or removes it. A task that already waits for this one, directly or through others, is not offered.
 
 #### Note cards and side notes
 
