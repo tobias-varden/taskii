@@ -2,8 +2,6 @@
 
 A daily work log for Windows. Each day is one page with a task list and free-form notes. Each morning Taskii carries the page forward to a new day, so you don't copy it by hand. Past days are kept as they were, and nothing drops off until you let it go.
 
-![Main window](docs/mockups/main-window.png)
-
 ## Why
 
 Taskii replaces a OneNote habit: one page per day, copied forward every morning, pruned after standup and filed by month by hand. Taskii keeps the useful parts (every past day preserved, nothing disappearing silently) and handles the chores itself.
@@ -26,10 +24,6 @@ Taskii replaces a OneNote habit: one page per day, copied forward every morning,
 - **Search** across every day. A task that lived for 48 days is one result, and you can page through its history to see how it changed.
 - **Tray app.** Taskii runs as a single instance in the notification area and can start with Windows, so quick capture is always instant.
 - **CLI.** `taskii-cli` reads your days from a terminal, with optional JSON output. It never writes to them.
-
-| Standup | Quick capture | Search |
-| --- | --- | --- |
-| ![Standup mode](docs/mockups/standup.png) | ![Quick capture](docs/mockups/quick-capture.png) | ![Search](docs/mockups/search.png) |
 
 ## The day file
 
@@ -125,7 +119,7 @@ src/
   Taskii.Cli    Read-only command line
   web           TypeScript + TipTap front end (Vite)
 tests/          xUnit projects and shared rule cases
-docs/           Design notes and mockups
+docs/           Design notes
 ```
 
 More detail is in [docs/design.md](docs/design.md).

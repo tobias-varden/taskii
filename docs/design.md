@@ -2,7 +2,7 @@
 
 Taskii is a personal daily work log for Windows. It replaces a OneNote habit: one page per day holding a task list and free-form working notes, copied forward each morning. This document records the design agreed so far and is written so that someone with no other context can start building from it.
 
-Status: design agreed in conversation and mocked as static pictures. Nothing is built yet. Items under [Open questions](#open-questions) are not decided.
+Status: design agreed in conversation. Nothing is built yet. Items under [Open questions](#open-questions) are not decided.
 
 ## Background: the workflow being replaced
 
@@ -42,8 +42,6 @@ The chores in this are the daily copy, the pruning after standup, and the month 
 
 ### Main window
 
-![Main window with the backlog collapsed](mockups/main-window.png)
-
 The window has three areas, left to right:
 
 - **Todo column.** The tasks being worked on, each with its body beneath it. A task body can be folded to just its title, with a hint such as "4 lines".
@@ -51,8 +49,6 @@ The window has three areas, left to right:
 - **Board.** Note cards flowing into as many columns as the window width allows. The page scrolls vertically only.
 
 The top bar has previous and next day, a calendar jump, search across all days, and the Standup button.
-
-![Main window with the backlog expanded](mockups/main-window-backlog-open.png)
 
 With the backlog expanded it is a full column with the same layout as Todo, and the board narrows. Whether the backlog is open is a view setting remembered locally. It is not written to the day file.
 
@@ -100,8 +96,6 @@ The user works with both Azure DevOps and GitHub.
 
 ### Standup mode
 
-![Standup mode](mockups/standup.png)
-
 Standup mode is a read-through view for the daily standup. It covers everything since the last time a standup was finished, so a Monday standup includes Friday.
 
 - **Done:** tasks completed since the last standup, with their bodies.
@@ -117,8 +111,6 @@ Two actions:
 
 ### Quick capture
 
-![Quick capture in three states](mockups/quick-capture.png)
-
 A global hotkey opens a small bar over whatever the user is doing. The main window does not open. After sending, the bar disappears and focus returns to the previous window, with no confirmation popup.
 
 - The first line is the task title. Tag autocomplete works here.
@@ -131,8 +123,6 @@ A global hotkey opens a small bar over whatever the user is doing. The main wind
 A second global hotkey opens the main window.
 
 ### Search
-
-![Search results with a preview of the selected task](mockups/search.png)
 
 Search runs from the top bar across all days and updates as the user types.
 
@@ -263,13 +253,3 @@ The main technical risk is the round trip between the editor's document and mark
 - Importing existing OneNote pages, with a tag alias list to merge variants such as `ACME` and `AC-ME`.
 - An explicit link from a note card to a task, so the note leaves with the task when it is done.
 - A layout option that shows Todo and Backlog stacked instead of side by side.
-
-## Mockup sources
-
-The pictures in this document are rendered from static HTML in [mockups/src](mockups/src). To regenerate one after editing, run headless Edge from Git Bash:
-
-```bash
-MSYS_NO_PATHCONV=1 "/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --headless=new --hide-scrollbars --user-data-dir="C:/Users/you/AppData/Local/Temp/taskii-edge" --window-size=1280,760 --screenshot="E:/solutions/taskii/docs/mockups/main-window.png" "file:///E:/solutions/taskii/docs/mockups/src/main.html"
-```
-
-The backlog-open picture uses `main.html?backlog=open`. The other pictures come from `standup.html`, `quick-capture.html` and `search.html`.
