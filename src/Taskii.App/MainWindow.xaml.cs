@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -92,6 +93,10 @@ public sealed partial class MainWindow : Window, IShell
         var picked = await picker.PickSingleFolderAsync();
         return picked?.Path;
     }
+
+    public void OpenLink(Uri url) => Process.Start(new ProcessStartInfo(url.AbsoluteUri) { UseShellExecute = true });
+
+    public void OpenFolder(string path) => Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { path } });
 
     private async void StartPage()
     {

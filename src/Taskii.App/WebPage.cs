@@ -58,12 +58,12 @@ public sealed class WebPage(WebView2 view, HostBridge bridge, string page)
             // The page never navigates. Anything else is a link, and links open in the browser.
             if (IsOurs(e.Uri)) return;
             e.Cancel = true;
-            HostBridge.OpenLink(e.Uri);
+            bridge.OpenLink(e.Uri);
         };
         core.NewWindowRequested += (_, e) =>
         {
             e.Handled = true;
-            HostBridge.OpenLink(e.Uri);
+            bridge.OpenLink(e.Uri);
         };
 
         // TASKII_DEV_URL points the windows at the Vite dev server for live reload.
@@ -116,7 +116,7 @@ public sealed class WebPage(WebView2 view, HostBridge bridge, string page)
             _ready.TrySetResult();
 
             object? result = null;
-            if (type == "flushed")
+            if (type == Taskii.Host.WindowRequests.Flushed)
             {
                 _flushed?.TrySetResult();
             }

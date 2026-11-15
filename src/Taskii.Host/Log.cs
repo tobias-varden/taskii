@@ -1,4 +1,4 @@
-namespace Taskii.App;
+namespace Taskii.Host;
 
 /// <summary>A small log beside the settings, for the day something goes wrong.</summary>
 public static class Log

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Taskii.Core;
 
-namespace Taskii.App;
+namespace Taskii.Host;
 
 public sealed class AppSettings
 {
@@ -42,15 +42,20 @@ public sealed class SettingsStore
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    public SettingsStore()
+    /// <param name="folder">Where to keep them. <see cref="Home"/> unless a test says otherwise.</param>
+    public SettingsStore(string? folder = null)
     {
+        Folder = folder is null ? Home : Path.GetFullPath(folder);
         Current = Load();
     }
 
     /// <summary>The folder for settings, the log and the browser profile.</summary>
     public static string Home => TaskiiHome.Folder;
 
-    private static string FilePath => TaskiiHome.SettingsFile;
+    /// <summary>The folder this store keeps its settings in, and the search index beside them.</summary>
+    public string Folder { get; }
+
+    private string FilePath => Path.Combine(Folder, Path.GetFileName(TaskiiHome.SettingsFile));
 
     public AppSettings Current { get; }
 
@@ -58,7 +63,7 @@ public sealed class SettingsStore
     {
         try
         {
-            Directory.CreateDirectory(Home);
+            Directory.CreateDirectory(Folder);
             var temp = FilePath + ".tmp";
             File.WriteAllText(temp, JsonSerializer.Serialize(Current, Json));
             File.Move(temp, FilePath, overwrite: true);
@@ -69,7 +74,7 @@ public sealed class SettingsStore
         }
     }
 
-    private static AppSettings Load()
+    private AppSettings Load()
     {
         try
         {

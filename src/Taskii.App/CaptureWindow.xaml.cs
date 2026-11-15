@@ -114,17 +114,20 @@ public sealed partial class CaptureWindow : Window
     {
         switch (type)
         {
-            case "captureResize":
+            case WindowRequests.CaptureResize:
+            {
                 // The page says how tall its content is; the window follows.
-                _height = Math.Clamp((int)Math.Ceiling(payload.GetProperty("height").GetDouble()), MinBarHeight, MaxBarHeight);
+                var resize = HostBridge.ReadPayload<CaptureResizeRequest>(type, payload);
+                _height = Math.Clamp((int)Math.Ceiling(resize.Height), MinBarHeight, MaxBarHeight);
                 if (_shown) AppWindow.Resize(SizeFor(_height));
                 return (true, null);
+            }
 
-            case "captureClose":
+            case WindowRequests.CaptureClose:
                 HideBar(restoreFocus: true);
                 return (true, null);
 
-            case "captureOpenMain":
+            case WindowRequests.CaptureOpenMain:
                 HideBar(restoreFocus: false);
                 _openMain();
                 return (true, null);

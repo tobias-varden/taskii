@@ -26,6 +26,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <ProjectReference Include="..\Taskii.Core\Taskii.Core.csproj" />
+    <ProjectReference Include="..\Taskii.Host\Taskii.Host.csproj" />
+    <Using Include="Taskii.Host" />
     <Content Include="Assets\taskii.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

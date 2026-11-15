@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    What the app's pages talk to: the bridge that answers their requests, and the settings and
+    log it needs. No UI here; the windows live in Taskii.App and plug in through IShell.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Taskii.Core\Taskii.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Taskii.Host.Tests" />
+  </ItemGroup>
+
+</Project>

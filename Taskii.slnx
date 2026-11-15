@@ -5,9 +5,11 @@
     </Project>
     <Project Path="src/Taskii.Cli/Taskii.Cli.csproj" />
     <Project Path="src/Taskii.Core/Taskii.Core.csproj" />
+    <Project Path="src/Taskii.Host/Taskii.Host.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Taskii.Cli.Tests/Taskii.Cli.Tests.csproj" />
     <Project Path="tests/Taskii.Core.Tests/Taskii.Core.Tests.csproj" />
+    <Project Path="tests/Taskii.Host.Tests/Taskii.Host.Tests.csproj" />
   </Folder>
 </Solution>
