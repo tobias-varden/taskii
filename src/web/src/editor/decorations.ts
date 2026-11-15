@@ -70,6 +70,42 @@ export const Marks = Extension.create({
   },
 });
 
+export interface FoundOptions {
+  /** Matches what was searched for. Global. */
+  find: RegExp | null;
+}
+
+/** Marks the words that were searched for, where an item is shown as a search result. */
+export const Found = Extension.create<FoundOptions>({
+  name: 'found',
+
+  addOptions() {
+    return { find: null };
+  },
+
+  addProseMirrorPlugins() {
+    const { find } = this.options;
+    if (!find) return [];
+    return [
+      new Plugin({
+        key: new PluginKey('found'),
+        props: {
+          decorations(state) {
+            const decorations: Decoration[] = [];
+            state.doc.descendants((node, pos) => {
+              if (!node.isText || !node.text) return;
+              for (const match of node.text.matchAll(find)) {
+                decorations.push(Decoration.inline(pos + match.index, pos + match.index + match[0].length, { nodeName: 'mark' }));
+              }
+            });
+            return DecorationSet.create(state.doc, decorations);
+          },
+        },
+      }),
+    ];
+  },
+});
+
 export interface GhostOptions {
   label: string;
   /** Adds a new empty item at the end and puts the cursor in it. */

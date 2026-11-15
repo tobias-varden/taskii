@@ -11,9 +11,9 @@ import { UndoRedo } from '@tiptap/extensions';
 import { TextSelection } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 import type { NoteDto, TaskDto } from '../types';
-import { docToNotes, docToTasks, notesToDoc, tasksToDoc, type NodeJSON, type Originals } from './convert';
+import { Originals, docToNotes, docToTasks, notesToDoc, tasksToDoc, type NodeJSON } from './convert';
 import { Board, type BoardOptions } from './board';
-import { Ghost, Marks, UniqueIds, tagOf } from './decorations';
+import { Found, Ghost, Marks, UniqueIds, tagOf } from './decorations';
 import { Grips, type DropIndex, type GripOptions } from './drag';
 import { Fold } from './fold';
 import { newTaskId } from './ids';
@@ -44,7 +44,8 @@ export interface TaskHooks extends EditorHooks {
   onTagClick: (tag: string) => void;
 }
 
-const shared = (keys: Partial<KeysOptions> = {}): Extensions => [
+/** What every editor has: text, bodies, marks, undo and the keyboard rules. */
+export const shared = (keys: Partial<KeysOptions> = {}): Extensions => [
   Text,
   Body,
   Line,
@@ -63,7 +64,7 @@ const shared = (keys: Partial<KeysOptions> = {}): Extensions => [
 /** Width of the strip to the left of a title or checkbox line that holds its checkbox. */
 const GUTTER = 24;
 
-function editorProps(className: string, hooks: EditorHooks & Partial<Pick<TaskHooks, 'onTagClick'>>) {
+export function editorProps(className: string, hooks: EditorHooks & Partial<Pick<TaskHooks, 'onTagClick'>>) {
   return {
     // Spell checking is off: it follows the Windows language, and on a Swedish system it underlines
     // nearly every word of English work notes.
@@ -239,6 +240,27 @@ export function createBoardEditor(
     ],
     editorProps: editorProps('cards', hooks),
     onUpdate: hooks.onChange,
+  });
+}
+
+/**
+ * One task or one note card as it was on some day, to be read and nothing else: no folding,
+ * no tools, and the words that were searched for marked.
+ */
+export function createPreviewEditor(
+  element: HTMLElement,
+  item: { task?: TaskDto | null; note?: NoteDto | null },
+  find: RegExp | null,
+  openLink: (href: string) => void,
+): Editor {
+  const originals = new Originals();
+  const hooks: EditorHooks = { onChange: () => {}, openLink, saveImage: () => Promise.reject(new Error('Read-only')) };
+  return new Editor({
+    element,
+    editable: false,
+    content: item.task ? tasksToDoc([item.task], originals) : notesToDoc(item.note ? [item.note] : [], originals),
+    extensions: [...(item.task ? [TaskDoc, Task, TaskTitle] : [BoardDoc, Card, CardTitle, Side]), ...shared(), Found.configure({ find })],
+    editorProps: editorProps(item.task ? 'tasks' : 'preview-cards', hooks),
   });
 }
 

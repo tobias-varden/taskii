@@ -9,13 +9,24 @@
   </head>
   <body>
     <header class="topbar">
-      <button class="nav" id="prev" type="button" hidden title="Previous day (Alt+Left)" aria-label="Previous day">&lsaquo;</button>
-      <span class="date" id="date"></span>
-      <button class="nav" id="next" type="button" hidden title="Next day (Alt+Right)" aria-label="Next day">&rsaquo;</button>
-      <button class="btn" id="today" type="button" hidden>Today</button>
-      <span class="pill" id="readonly" hidden title="Past days are kept exactly as they were">read-only</span>
-      <span class="pill" id="carried" hidden title="Today has no file yet. It is created the first time you change something."></span>
-      <button class="filter" id="filter" type="button" hidden title="Showing only tasks with this tag. Click or press Esc to show all."></button>
+      <!-- While searching, the day's controls make way for a way back. -->
+      <div class="day-nav">
+        <button class="nav" id="prev" type="button" hidden title="Previous day (Alt+Left)" aria-label="Previous day">&lsaquo;</button>
+        <span class="date" id="date"></span>
+        <button class="nav" id="next" type="button" hidden title="Next day (Alt+Right)" aria-label="Next day">&rsaquo;</button>
+        <button class="btn" id="today" type="button" hidden>Today</button>
+        <span class="pill" id="readonly" hidden title="Past days are kept exactly as they were">read-only</span>
+        <span class="pill" id="carried" hidden title="Today has no file yet. It is created the first time you change something."></span>
+        <button class="filter" id="filter" type="button" hidden title="Showing only tasks with this tag. Click or press Esc to show all."></button>
+      </div>
+      <div class="search-nav">
+        <button class="nav" id="search-back" type="button" title="Back to the day" aria-label="Back to the day">&larr;</button>
+        <span class="date">Search</span>
+      </div>
+      <label class="search" id="search-box" hidden>
+        <input id="search" type="text" placeholder="Search all days" title="Search all days (Ctrl+F)" autocomplete="off" spellcheck="false" />
+        <span class="n" id="search-count" role="status"></span>
+      </label>
       <span class="spacer"></span>
       <span class="status" id="status" role="status"></span>
       <div class="menu-anchor">
@@ -58,6 +69,52 @@
       </section>
 
       <section class="board" id="board" aria-label="Notes"></section>
+    </main>
+
+    <main class="search-view" id="search-view" hidden>
+      <section class="results" aria-label="Results">
+        <div class="filters">
+          <div class="kinds" id="search-kinds">
+            <button class="fpill on" type="button" data-kind="">All</button>
+            <button class="fpill" type="button" data-kind="task">Tasks</button>
+            <button class="fpill" type="button" data-kind="note">Notes</button>
+          </div>
+          <span class="dot">&middot;</span>
+          <select class="fpill" id="search-tag" aria-label="Tag" title="Only tasks with this tag"></select>
+          <button class="fpill" id="search-state" type="button" title="Open, done, or both">Open and done</button>
+          <span class="spacer"></span>
+          <span class="sort">Newest first</span>
+        </div>
+        <div class="result-list" id="search-results" role="listbox" aria-label="Results"></div>
+        <div class="foot">
+          <span><kbd>&uarr;</kbd><kbd>&darr;</kbd>move</span><span><kbd>Enter</kbd>open day</span><span><kbd>Esc</kbd>back to today</span>
+        </div>
+      </section>
+
+      <section class="preview none" id="search-preview" aria-label="Preview">
+        <div class="ph">
+          <button class="btn pg" id="pv-first" type="button" title="First day" aria-label="First day">&#124;&lsaquo;</button>
+          <button class="btn pg" id="pv-prev" type="button" title="Previous day (Alt+Left)" aria-label="Previous day">&lsaquo;</button>
+          <span class="pv-day"><b id="pv-date"></b><span id="pv-count"></span></span>
+          <button class="btn pg" id="pv-next" type="button" title="Next day (Alt+Right)" aria-label="Next day">&rsaquo;</button>
+          <button class="btn pg" id="pv-last" type="button" title="Latest day" aria-label="Latest day">&rsaquo;&#124;</button>
+          <span class="spacer"></span>
+          <button class="btn" id="pv-open" type="button" title="Show this day (Enter)">Open day</button>
+        </div>
+        <div class="days">
+          <span id="pv-changed"></span>
+          <span class="changes" id="pv-changes">
+            <span>&middot;</span>
+            <button class="link" id="pv-prev-change" type="button" title="The day before this one on which it was changed">&lsaquo; Previous change</button>
+            <button class="link" id="pv-next-change" type="button" title="The next day on which it was changed">Next change &rsaquo;</button>
+          </span>
+        </div>
+        <div class="sheet readonly" id="pv-sheet"></div>
+        <div class="rel" id="pv-related" hidden>
+          <p class="rel-title">Related</p>
+          <div id="pv-related-list"></div>
+        </div>
+      </section>
     </main>
 
     <div class="welcome" id="welcome" hidden>

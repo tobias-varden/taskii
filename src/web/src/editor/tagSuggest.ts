@@ -21,7 +21,7 @@ interface Query {
 }
 
 /** What has been typed so far, if the cursor is at the end of a title that could still become a tag. */
-function queryAt(state: EditorState): Query | null {
+export function queryAt(state: EditorState): Query | null {
   const { $from, empty } = state.selection;
   if (!empty || $from.parent.type.name !== 'taskTitle') return null;
 

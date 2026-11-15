@@ -7,7 +7,9 @@ import { TaskDrag } from './editor/drag';
 import { appendTask, collectTags, countTasks, createBoardEditor, createTaskEditor, moveTask, readNotes, readTasks, redraw, taskIds } from './editor/editors';
 import { pruneFolded } from './editor/fold';
 import { viewState } from './editor/viewState';
+import { formatDate } from './dates';
 import type { Host } from './host';
+import { SearchView } from './search';
 import type { DayContent, DayDto } from './types';
 
 /** How long after the last keystroke the day is written. */
@@ -18,13 +20,6 @@ const IDLE_BEFORE_ROLLOVER = 2 * 60_000;
 const BACKLOG_OPEN = 'taskii.backlogOpen';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
-
-const dateFormat = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-
-function formatDate(iso: string): string {
-  const [year, month, day] = iso.split('-').map(Number);
-  return dateFormat.format(new Date(year, month - 1, day)).replace(',', '');
-}
 
 export class App {
   private today = '';
@@ -56,7 +51,17 @@ export class App {
 
   private readonly cardDrag = new CardDrag();
 
-  constructor(private readonly host: Host) {}
+  private readonly search: SearchView;
+
+  constructor(private readonly host: Host) {
+    this.search = new SearchView(host, {
+      today: () => this.today,
+      flush: () => this.flush(),
+      // The day underneath is still there; only another one needs loading.
+      openDay: (date) => date !== this.day?.date && void this.open(date),
+      openLink: (url) => void this.host.request('openLink', { url }),
+    });
+  }
 
   async start(): Promise<void> {
     this.bind();
@@ -326,6 +331,17 @@ export class App {
     $('welcome-choose').addEventListener('click', () => void this.chooseFolder(false));
 
     document.addEventListener('keydown', (event) => {
+      if (event.ctrlKey && !event.altKey && !event.shiftKey && (event.key === 'f' || event.key === 'k') && this.day) {
+        event.preventDefault();
+        this.search.focus();
+        return;
+      }
+      // Search has the window to itself; the day's shortcuts wait until it is left.
+      if (this.search.active) {
+        this.search.handleKey(event);
+        return;
+      }
+
       if (event.key === 'Escape') {
         if (!menu.hidden) menu.hidden = true;
         else if (viewState.filter) this.setFilter(null);
@@ -362,6 +378,7 @@ export class App {
   private setFolder(path: string | null): void {
     const button = $('folder');
     button.hidden = !path;
+    $('search-box').hidden = !path;
     if (!path) return;
     button.textContent = path.split(/[\\/]/).filter(Boolean).pop() ?? path;
     $('folder-path').textContent = path;

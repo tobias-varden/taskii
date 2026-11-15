@@ -15,29 +15,34 @@ public readonly record struct Hotkey(uint Modifiers, uint Key, string Text)
 
         uint modifiers = 0;
         uint key = 0;
-        var names = new List<string>();
+        var keyName = "";
 
         foreach (var part in text.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
         {
             switch (part.ToLowerInvariant())
             {
-                case "alt": modifiers |= Alt; names.Add("Alt"); break;
-                case "ctrl" or "control": modifiers |= Control; names.Add("Ctrl"); break;
-                case "shift": modifiers |= Shift; names.Add("Shift"); break;
-                case "win" or "windows": modifiers |= Win; names.Add("Win"); break;
+                case "alt": modifiers |= Alt; break;
+                case "ctrl" or "control": modifiers |= Control; break;
+                case "shift": modifiers |= Shift; break;
+                case "win" or "windows": modifiers |= Win; break;
                 default:
                     if (key != 0 || KeyCode(part) is not { } code) return null;
                     key = code;
-                    names.Add(part.Length == 1 ? part.ToUpperInvariant() : char.ToUpperInvariant(part[0]) + part[1..].ToLowerInvariant());
+                    keyName = part.Length == 1 ? part.ToUpperInvariant() : char.ToUpperInvariant(part[0]) + part[1..].ToLowerInvariant();
                     break;
             }
         }
 
         if (modifiers == 0 || key == 0) return null;
 
-        // Modifiers first, in the order they are usually written.
-        var ordered = new[] { "Ctrl", "Win", "Alt", "Shift" }.Where(names.Contains).Append(names[^1] is "Ctrl" or "Win" or "Alt" or "Shift" ? "" : names.Last(n => n is not ("Ctrl" or "Win" or "Alt" or "Shift")));
-        return new Hotkey(modifiers, key, string.Join('+', ordered.Where(n => n.Length > 0)));
+        // Written back the way shortcuts usually are, whatever order they were typed in.
+        var names = new List<string>();
+        if ((modifiers & Control) != 0) names.Add("Ctrl");
+        if ((modifiers & Win) != 0) names.Add("Win");
+        if ((modifiers & Alt) != 0) names.Add("Alt");
+        if ((modifiers & Shift) != 0) names.Add("Shift");
+        names.Add(keyName);
+        return new Hotkey(modifiers, key, string.Join('+', names));
     }
 
     private static uint? KeyCode(string name)

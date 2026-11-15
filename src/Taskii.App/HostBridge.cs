@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Taskii.Core.Days;
+using Taskii.Core.Search;
 
 namespace Taskii.App;
 
@@ -34,12 +36,38 @@ public sealed record SaveDayResult(string Status, string Version);
 
 public sealed record PeekResult(string Today, string Version);
 
+public sealed record CaptureTag(string Tag, int Open);
+
+public sealed record CaptureTask(string Id, string Title, bool Backlog);
+
+/// <summary>What the quick capture bar needs to know about today.</summary>
+/// <param name="Ready">False until a data folder has been chosen.</param>
+public sealed record CaptureContext(bool Ready, string AssetBase, IReadOnlyList<CaptureTag> Tags, IReadOnlyList<CaptureTask> Tasks);
+
+/// <summary>What a search found, and the tags there are to narrow it by.</summary>
+public sealed record SearchResponse(IReadOnlyList<SearchHit> Hits, int Total, int Days, IReadOnlyList<string> Tags);
+
 /// <summary>
 /// Answers the page's requests: which day to show, and reading and writing day files.
 /// </summary>
-public sealed class HostBridge(SettingsStore settings, IShell shell, TimeProvider? time = null)
+public sealed class HostBridge(SettingsStore settings, TimeProvider? time = null)
 {
-    public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    /// <summary>The window that can show a folder picker.</summary>
+    public IShell? Shell { get; set; }
+
+    /// <summary>
+    /// Called before the day is changed from outside the main page, so the page can write what
+    /// it has pending first and the two never overwrite each other.
+    /// </summary>
+    public Func<Task>? BeforeOutsideEdit { get; set; }
+
+    /// <summary>Called after such a change, so the main page can show it.</summary>
+    public Action? AfterOutsideEdit { get; set; }
+
+    public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+    };
 
     /// <summary>The host the page loads pasted images from. The window answers requests to it from the asset folder.</summary>
     public const string AssetHost = "assets.taskii.example";
@@ -50,6 +78,14 @@ public sealed class HostBridge(SettingsStore settings, IShell shell, TimeProvide
     private const string DateFormat = "yyyy-MM-dd";
     private readonly TimeProvider _time = time ?? TimeProvider.System;
     private DayStore? _store;
+
+    /// <summary>How long the search index is trusted before the day files are looked at again.</summary>
+    private static readonly TimeSpan IndexFreshFor = TimeSpan.FromSeconds(3);
+
+    private readonly Lock _indexGate = new();
+    private SearchIndex? _index;
+    private long _indexChecked;
+    private volatile bool _indexStale = true;
 
     /// <summary>
     /// The day that was last handed out as editable. Saves are accepted for this day only. It
@@ -100,6 +136,36 @@ public sealed class HostBridge(SettingsStore settings, IShell shell, TimeProvide
                 return await Task.Run(() => new AssetResult(assets.Save(bytes, mediaType)));
             }
 
+            case "captureContext":
+                return await Task.Run(BuildCaptureContext);
+
+            case "capture":
+            {
+                var kind = payload.GetProperty("kind").GetString() ?? "";
+                var title = payload.GetProperty("title").GetString() ?? "";
+                var body = payload.GetProperty("body").GetString() ?? "";
+                var taskId = payload.TryGetProperty("taskId", out var id) ? id.GetString() ?? "" : "";
+                return await CaptureAsync(kind, title, body, taskId);
+            }
+
+            case "search":
+            {
+                var query = new SearchQuery
+                {
+                    Text = payload.GetProperty("text").GetString() ?? "",
+                    Kind = payload.GetProperty("kind").GetString() switch { "task" => ItemKind.Task, "note" => ItemKind.Note, _ => null },
+                    Tag = payload.GetProperty("tag").GetString(),
+                    State = payload.GetProperty("state").GetString() switch { "open" => TaskState.Open, "done" => TaskState.Done, _ => TaskState.Any },
+                };
+                return await Task.Run(() => Search(query));
+            }
+
+            case "searchItem":
+            {
+                var key = payload.GetProperty("key").GetString() ?? "";
+                return await Task.Run(() => FreshIndex().History(key));
+            }
+
             case "openLink":
                 OpenLink(payload.GetProperty("url").GetString());
                 return null;
@@ -130,6 +196,102 @@ public sealed class HostBridge(SettingsStore settings, IShell shell, TimeProvide
 
     private DayStore Store => _store ?? throw new InvalidOperationException("No data folder has been chosen.");
 
+    /// <summary>Opens the data folder from settings if that has not happened yet. False if there is none.</summary>
+    private bool EnsureStore() =>
+        _store is not null || (settings.Current.DataFolder is { Length: > 0 } folder && TryUse(folder));
+
+    private SearchResponse Search(SearchQuery query)
+    {
+        var index = FreshIndex();
+        // Nothing typed and no tag chosen is not a search yet; it would list everything there is.
+        var results = string.IsNullOrWhiteSpace(query.Text) && string.IsNullOrWhiteSpace(query.Tag) ? SearchResults.None : index.Search(query);
+        return new SearchResponse(results.Hits, results.Total, results.Days, index.Tags());
+    }
+
+    /// <summary>
+    /// The index, caught up with the day files. They are only looked at again after a save
+    /// from here, or once a few seconds have passed, so typing a query does not keep doing it.
+    /// </summary>
+    private SearchIndex FreshIndex()
+    {
+        var store = Store;
+        lock (_indexGate)
+        {
+            if (_index is null)
+            {
+                _index = new SearchIndex(store, Path.Combine(SettingsStore.Home, "index.db"));
+                _indexStale = true;
+            }
+
+            if (_indexStale || _time.GetElapsedTime(_indexChecked) > IndexFreshFor)
+            {
+                _indexStale = false;
+                _index.Refresh();
+                _indexChecked = _time.GetTimestamp();
+            }
+
+            return _index;
+        }
+    }
+
+    /// <summary>Reads the day files into the index ahead of the first search, which can take a moment the very first time.</summary>
+    private void WarmIndex() => Task.Run(() =>
+    {
+        try
+        {
+            FreshIndex();
+        }
+        catch (Exception e)
+        {
+            Log.Write("Could not build the search index", e);
+        }
+    });
+
+    private CaptureContext BuildCaptureContext()
+    {
+        if (!EnsureStore()) return new CaptureContext(false, AssetBase, [], []);
+
+        var day = Store.Load(Today, carry: true).File.Content;
+        var open = day.Todo.Select(t => (Task: t, Backlog: false))
+            .Concat(day.Backlog.Select(t => (Task: t, Backlog: true)))
+            .Where(t => !t.Task.Done && t.Task.Id.Length > 0)
+            .ToList();
+
+        var tags = open
+            .Select(t => TaskTags.Of(t.Task.Title))
+            .OfType<string>()
+            .GroupBy(tag => tag)
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new CaptureTag(group.Key, group.Count()))
+            .ToList();
+
+        return new CaptureContext(true, AssetBase, tags, [.. open.Select(t => new CaptureTask(t.Task.Id, t.Task.Title, t.Backlog))]);
+    }
+
+    /// <summary>Writes something typed into the quick capture bar to today.</summary>
+    private async Task<bool> CaptureAsync(string kind, string title, string body, string taskId)
+    {
+        if (!EnsureStore()) throw new InvalidOperationException("Choose a data folder in Taskii first.");
+
+        if (BeforeOutsideEdit is not null) await BeforeOutsideEdit();
+
+        var today = Today;
+        var changed = await Task.Run(() => Store.Update(today, day => kind switch
+        {
+            "todo" => DayEdits.AddTask(day, title, body),
+            "backlog" => DayEdits.AddTask(day, title, body, toBacklog: true),
+            "note" => DayEdits.AddNote(day, title, body),
+            "append" when string.IsNullOrWhiteSpace(body) => null,
+            "append" => DayEdits.AppendToTask(day, taskId, body) ?? throw new InvalidOperationException("That task is no longer in today's list."),
+            _ => throw new InvalidOperationException($"Unknown capture kind '{kind}'."),
+        }));
+
+        _indexStale = true;
+        AfterOutsideEdit?.Invoke();
+        return changed;
+    }
+
     private InitResult Init()
     {
         var folder = settings.Current.DataFolder;
@@ -143,7 +305,7 @@ public sealed class HostBridge(SettingsStore settings, IShell shell, TimeProvide
 
     private async Task<FolderResult?> ChooseFolderAsync(bool useSuggested)
     {
-        var folder = useSuggested ? SuggestedFolder() : await shell.PickFolderAsync();
+        var folder = useSuggested ? SuggestedFolder() : Shell is null ? null : await Shell.PickFolderAsync();
         if (string.IsNullOrWhiteSpace(folder)) return null;
 
         if (!TryUse(folder)) throw new InvalidOperationException($"Taskii cannot use {folder}.");
@@ -159,6 +321,13 @@ public sealed class HostBridge(SettingsStore settings, IShell shell, TimeProvide
         {
             Directory.CreateDirectory(folder);
             _store = new DayStore(folder);
+            lock (_indexGate)
+            {
+                _index?.Dispose();
+                _index = null;
+            }
+
+            WarmIndex();
             return true;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
@@ -209,6 +378,7 @@ public sealed class HostBridge(SettingsStore settings, IShell shell, TimeProvide
         if (date != _editable) throw new InvalidOperationException("Past days are read-only.");
 
         var result = Store.Save(date, content, baseVersion, overwrite);
+        if (result.Status == SaveStatus.Saved) _indexStale = true;
         return new SaveDayResult(result.Status.ToString().ToLowerInvariant(), result.Version);
     }
 

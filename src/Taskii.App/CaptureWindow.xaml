@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Taskii.App.CaptureWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Taskii quick capture">
+    <Grid x:Name="Root">
+        <WebView2 x:Name="Web" />
+    </Grid>
+</Window>

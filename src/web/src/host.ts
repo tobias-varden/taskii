@@ -3,7 +3,20 @@
 // Inside the app this is the WebView2 message bridge. In a plain browser (pnpm dev) there is
 // no shell, so a stand-in with sample data is used and the page can be worked on by itself.
 
-import type { AssetResult, DayContent, DayDto, FolderResult, InitResult, PeekResult, SaveResult } from './types';
+import type {
+  AssetResult,
+  CaptureContext,
+  CaptureKind,
+  DayContent,
+  DayDto,
+  FolderResult,
+  InitResult,
+  ItemHistory,
+  PeekResult,
+  SaveResult,
+  SearchRequest,
+  SearchResponse,
+} from './types';
 
 interface Requests {
   init: { payload: undefined; result: InitResult };
@@ -16,10 +29,22 @@ interface Requests {
   openLink: { payload: { url: string }; result: null };
   openDataFolder: { payload: undefined; result: null };
   flushed: { payload: undefined; result: null };
+
+  // Search across all days
+  search: { payload: SearchRequest; result: SearchResponse };
+  /** The days one search result lived on. Null if it is gone since the search. */
+  searchItem: { payload: { key: string }; result: ItemHistory | null };
+
+  // Quick capture bar
+  captureContext: { payload: undefined; result: CaptureContext };
+  capture: { payload: { kind: CaptureKind; title: string; body: string; taskId: string }; result: boolean };
+  captureResize: { payload: { height: number }; result: null };
+  captureClose: { payload: undefined; result: null };
+  captureOpenMain: { payload: undefined; result: null };
 }
 
 /** Things the shell tells the page without being asked. */
-export type HostEvent = 'activated' | 'flush';
+export type HostEvent = 'activated' | 'flush' | 'shown';
 
 export interface Host {
   request<K extends keyof Requests>(type: K, ...payload: Requests[K]['payload'] extends undefined ? [] : [Requests[K]['payload']]): Promise<Requests[K]['result']>;

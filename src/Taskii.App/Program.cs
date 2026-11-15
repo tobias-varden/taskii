@@ -21,7 +21,16 @@ public static class Program
             return 0;
         }
 
-        instance.Activated += (_, _) => App.Current?.Surface();
+        // Started again while running: "Taskii.exe --capture" opens the capture bar, "--exit"
+        // saves and exits, and anything else brings the main window forward.
+        instance.Activated += (_, e) =>
+        {
+            var arguments = (e.Data as Windows.ApplicationModel.Activation.ILaunchActivatedEventArgs)?.Arguments ?? "";
+            App.Current?.Activate(arguments);
+        };
+
+        // Asked to exit when nothing is running: there is nothing to do.
+        if (Environment.GetCommandLineArgs().Skip(1).Contains(Autostart.ExitArgument, StringComparer.OrdinalIgnoreCase)) return 0;
 
         Application.Start(parameters =>
         {

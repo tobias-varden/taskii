@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Taskii quick capture</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/capture.css" />
+  </head>
+  <body class="capture">
+    <div class="bar" id="bar">
+      <!-- Shown instead of the plus when the text will be added to an existing task. -->
+      <div class="target" id="target" hidden>
+        <span class="mark" aria-hidden="true">&#8627;</span>
+        <span id="target-title"></span>
+      </div>
+
+      <div class="in">
+        <span class="mark" id="plus" aria-hidden="true">+</span>
+        <div id="editor"></div>
+      </div>
+
+      <div class="sugg" id="list" role="listbox" hidden></div>
+
+      <div class="foot">
+        <span class="hints" id="hints"></span>
+        <span class="spacer"></span>
+        <button class="btn" id="as-note" type="button" title="Add as a note card on the board">Note card</button>
+        <button class="btn" id="as-backlog" type="button" title="Add to the backlog">Backlog</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/capture.ts"></script>
+  </body>
+</html>
