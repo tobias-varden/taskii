@@ -112,6 +112,9 @@ public sealed class HostBridge(SettingsStore settings, TimeProvider? time = null
                 return await Task.Run(() => LoadDay(date));
             }
 
+            case "listDays":
+                return await Task.Run(() => Store.ListDays().Select(Format).ToList());
+
             case "saveDay":
             {
                 var date = ReadDate(payload);

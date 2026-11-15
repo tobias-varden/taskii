@@ -68,10 +68,13 @@ interface StoredDay {
   version: number;
 }
 
-/** Nine days ending today, with things arriving, changing and leaving along the way, so search has a past to look in. */
+/**
+ * Nine days ending today, with things arriving, changing and leaving along the way, so search has a
+ * past to look in. A few older ones are scattered over the weeks before, so the calendar has months to turn.
+ */
 function sampleDays(): Map<string, StoredDay> {
   const days = new Map<string, StoredDay>();
-  for (let back = 8; back >= 0; back--) {
+  for (const back of [47, 46, 45, 42, 40, 39, 38, 33, 32, 8, 7, 6, 5, 4, 3, 2, 1, 0]) {
     const date = iso(new Date(Date.now() - back * 86_400_000));
     const content = sample();
 
@@ -259,6 +262,8 @@ export function mockHost(): Host {
         return { dataFolder: folder, day: load(today) };
       case 'loadDay':
         return load(payload.date);
+      case 'listDays':
+        return [...days.keys()].sort();
       case 'peek':
         return { today, version: String(days.get(payload.date)?.version ?? '') };
       case 'saveDay': {

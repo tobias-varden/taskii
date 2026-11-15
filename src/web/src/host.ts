@@ -24,6 +24,8 @@ interface Requests {
   loadDay: { payload: { date: string }; result: DayDto };
   saveDay: { payload: { date: string; baseVersion: string; overwrite: boolean; content: DayContent }; result: SaveResult };
   peek: { payload: { date: string }; result: PeekResult };
+  /** Every day that has a file, oldest first, as yyyy-MM-dd. */
+  listDays: { payload: undefined; result: string[] };
   /** Stores a pasted image. `data` is base64. */
   saveAsset: { payload: { mediaType: string; data: string }; result: AssetResult };
   openLink: { payload: { url: string }; result: null };

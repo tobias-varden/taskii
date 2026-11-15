@@ -7,6 +7,7 @@ import { TaskDrag } from './editor/drag';
 import { appendTask, collectTags, countTasks, createBoardEditor, createTaskEditor, moveTask, readNotes, readTasks, redraw, taskIds } from './editor/editors';
 import { pruneFolded } from './editor/fold';
 import { viewState } from './editor/viewState';
+import { Calendar } from './calendar';
 import { formatDate } from './dates';
 import type { Host } from './host';
 import { SearchView } from './search';
@@ -52,8 +53,15 @@ export class App {
   private readonly cardDrag = new CardDrag();
 
   private readonly search: SearchView;
+  private readonly calendar: Calendar;
 
   constructor(private readonly host: Host) {
+    this.calendar = new Calendar({
+      today: () => this.today,
+      shown: () => this.day?.date ?? null,
+      days: () => this.host.request('listDays'),
+      open: (date) => date !== this.day?.date && void this.open(date),
+    });
     this.search = new SearchView(host, {
       today: () => this.today,
       flush: () => this.flush(),
@@ -90,6 +98,7 @@ export class App {
     this.dirty = false;
     this.setConflict(false);
     clearTimeout(this.saveTimer);
+    this.calendar.close();
 
     const hooks = {
       onChange: () => this.changed(),

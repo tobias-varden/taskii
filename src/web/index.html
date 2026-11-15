@@ -12,7 +12,20 @@
       <!-- While searching, the day's controls make way for a way back. -->
       <div class="day-nav">
         <button class="nav" id="prev" type="button" hidden title="Previous day (Alt+Left)" aria-label="Previous day">&lsaquo;</button>
-        <span class="date" id="date"></span>
+        <div class="menu-anchor" id="cal-anchor">
+          <button class="date date-btn" id="date" type="button" title="Pick a day" aria-haspopup="dialog" aria-expanded="false"></button>
+          <div class="cal" id="cal" role="dialog" aria-label="Pick a day" hidden>
+            <div class="cal-head">
+              <button class="nav" id="cal-prev" type="button" title="Previous month (Page Up)" aria-label="Previous month">&lsaquo;</button>
+              <span class="cal-title" id="cal-title" aria-live="polite"></span>
+              <button class="nav" id="cal-next" type="button" title="Next month (Page Down)" aria-label="Next month">&rsaquo;</button>
+            </div>
+            <div class="cal-grid cal-week" aria-hidden="true">
+              <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+            </div>
+            <div class="cal-grid" id="cal-days"></div>
+          </div>
+        </div>
         <button class="nav" id="next" type="button" hidden title="Next day (Alt+Right)" aria-label="Next day">&rsaquo;</button>
         <button class="btn" id="today" type="button" hidden>Today</button>
         <span class="pill" id="readonly" hidden title="Past days are kept exactly as they were">read-only</span>
