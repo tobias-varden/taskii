@@ -1,7 +1,7 @@
 // The small list that asks what a task is waiting for: pick an open task, or type the title
 // of a new one.
 
-import { tagOf } from './editor/decorations';
+import { splitTag } from './task';
 
 export interface PickerTask {
   id: string;
@@ -123,9 +123,9 @@ export class BlockerPicker {
     } else if (row.kind === 'create') {
       node.append(el('span', 'picker-quiet', 'New task above: '), el('span', '', row.title));
     } else {
-      const tag = tagOf(row.task.title);
+      const { tag, title } = splitTag(row.task.title);
       if (tag) node.append(el('span', 'su-tag', tag), ' ');
-      node.append(el('span', 'picker-name', tag ? row.task.title.slice(tag.length + 1).trimStart() : row.task.title));
+      node.append(el('span', 'picker-name', title));
       const notes = [row.task.id === this.request?.current ? 'current' : '', row.task.backlog ? 'backlog' : ''].filter(Boolean);
       if (notes.length) node.append(el('span', 'picker-more', notes.join(' · ')));
     }

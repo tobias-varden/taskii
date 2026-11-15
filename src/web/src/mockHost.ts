@@ -2,7 +2,7 @@
 // development. It holds the day from the design mockups in memory. `?first-run` shows the
 // welcome screen, `?conflict` makes the next save collide with a change "from another device".
 
-import { tagOf } from './editor/decorations';
+import { blockersOf, tagOf } from './task';
 import type { Host } from './host';
 import { finder, termsOf } from './search';
 import { localStamp } from './editor/ids';
@@ -146,15 +146,14 @@ const textOf = ({ task, note }: ItemVersion) =>
 const ticketsIn = (version: ItemVersion) =>
   [...textOf(version).matchAll(/(?<![\w/#.-])([A-Za-z](?:[\w.-]*\w)?)#(\d+)\b/g)].map((match) => `${match[1].toLowerCase()}#${match[2]}`);
 
-const blockersOf = (version: ItemVersion) =>
-  (version.task?.fields ?? []).filter((field) => field.key === 'blocked-by').map((field) => 't:' + field.value.replace(/^\^/, ''));
+const blockerKeysOf = (version: ItemVersion) => blockersOf(version.task?.fields).map((id) => 't:' + id);
 
 const titleOf = (version: ItemVersion) => version.task?.title ?? version.note!.heading;
 
 function relatedTo(history: ItemHistory, version: ItemVersion, all: ItemHistory[]): RelatedItem[] {
   const related: RelatedItem[] = [];
   const tickets = ticketsIn(version);
-  const blockers = blockersOf(version);
+  const blockers = blockerKeysOf(version);
   // Each of the others as it was on the last day it had the link.
   const lastWith = (other: ItemHistory, has: (version: ItemVersion) => boolean) => other.days.findLast((day) => has(other.versions[day.version]));
   const add = (other: ItemHistory, relation: RelatedItem['relation'], day: ItemHistory['days'][number], ticket: string | null) => {
@@ -165,7 +164,7 @@ function relatedTo(history: ItemHistory, version: ItemVersion, all: ItemHistory[
   const others = all.filter((other) => other.key !== history.key);
   for (const other of others) if (blockers.includes(other.key)) add(other, 'blockedBy', other.days.at(-1)!, null);
   for (const other of others) {
-    const day = lastWith(other, (then) => blockersOf(then).includes(history.key));
+    const day = lastWith(other, (then) => blockerKeysOf(then).includes(history.key));
     if (day) add(other, 'blocks', day, null);
   }
   for (const other of others) {

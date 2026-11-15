@@ -4,16 +4,9 @@
 import { Extension, type Editor } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import { tagOf } from '../task';
 import { newTaskId } from './ids';
 import { viewState } from './viewState';
-
-/** The tag is the text before the first colon in a task title: "ACME" in "ACME: Fix users". */
-const TAG = /^([^\s:][^:]{0,23}):(?= |$)/;
-
-export function tagOf(title: string): string | null {
-  const match = TAG.exec(title);
-  return match && !/https?$/i.test(match[1]) ? match[1] : null;
-}
 
 const PLACEHOLDER: Record<string, string> = { taskTitle: 'New task', cardTitle: 'Heading' };
 

@@ -7,7 +7,7 @@
 import { Editor, Extension, Node } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
 import { docToTasks, Originals, type NodeJSON } from './editor/convert';
-import { tagOf } from './editor/decorations';
+import { splitTag } from './task';
 import { editorProps, shared } from './editor/editors';
 import { Task, TaskTitle } from './editor/schema';
 import { queryAt } from './editor/tagSuggest';
@@ -319,10 +319,10 @@ function tagLabel(tag: string): HTMLElement {
 
 /** A task title with its tag drawn as a label, as in the main window. */
 function titleWithTag(title: string): HTMLElement {
-  const tag = tagOf(title);
+  const { tag, title: rest } = splitTag(title);
   if (!tag) return span(title);
   const wrap = tagLabel(tag);
-  wrap.append(title.slice(tag.length + 1).trimStart());
+  wrap.append(rest);
   return wrap;
 }
 

@@ -1,7 +1,7 @@
 // What a standup reads out: today's tasks sorted into done, working on and blocked, with
 // what is new since the last standup was finished. No DOM here, so it can be tested.
 
-import { tagOf } from './editor/decorations';
+import { blockersOf, doneAt, splitTag } from './task';
 import { parseBody, serializeBody, type BlockJSON } from './markdown/body';
 import { parseInline } from './markdown/inline';
 import type { DayContent, StandupDto, TaskDto } from './types';
@@ -43,13 +43,6 @@ export const CHANGE_LABEL: Record<Exclude<Change, null | 'changed'>, string> = {
   unchanged: 'no change',
 };
 
-const doneAt = (task: TaskDto) => task.fields.findLast((field) => field.key === 'done')?.value ?? null;
-
-function withoutTag(title: string): { tag: string | null; title: string } {
-  const tag = tagOf(title);
-  return { tag, title: tag ? title.slice(tag.length + 1).trimStart() : title };
-}
-
 /** What a line says, wherever it is indented to. */
 const lineKey = (block: BlockJSON) => serializeBody([{ ...block, attrs: { ...block.attrs, indent: 0 } } as BlockJSON]);
 
@@ -83,12 +76,12 @@ export function buildReport(day: DayContent, last: StandupDto): Report {
 
     const then = baseline ? before.get(task.id) : undefined;
     const blocks = parseBody(task.body).filter((block) => !isBlank(block));
-    const item: ReportTask = { id: task.id, ...withoutTag(task.title), lines: [], change: null, blockedBy: null };
+    const item: ReportTask = { id: task.id, ...splitTag(task.title), lines: [], change: null, blockedBy: null };
 
     if (task.done) {
       // Reported at the last standup already; it only stays in today's list until tomorrow.
       // A done task that does not say when cannot be shown to have been reported, so it is read out.
-      const at = doneAt(task);
+      const at = doneAt(task.fields);
       if (since && at && at < since) continue;
       item.lines = blocks.map((block) => ({ block, isNew: false }));
       report.done.push(item);
@@ -103,12 +96,11 @@ export function buildReport(day: DayContent, last: StandupDto): Report {
     const known = new Set(item.change === 'changed' ? parseBody(then!.task.body).map(lineKey) : []);
     item.lines = blocks.map((block) => ({ block, isNew: item.change === 'changed' && !known.has(lineKey(block)) }));
 
-    const blocker = task.fields
-      .filter((field) => field.key === 'blocked-by')
-      .map((field) => open.get(field.value.replace(/^\^/, '')))
+    const blocker = blockersOf(task.fields)
+      .map((id) => open.get(id))
       .find((other) => other && other.id !== task.id);
     if (blocker) {
-      item.blockedBy = withoutTag(blocker.title).title;
+      item.blockedBy = splitTag(blocker.title).title;
       report.blocked.push(item);
     } else {
       report.working.push(item);

@@ -6,7 +6,7 @@
 
 import type { Editor } from '@tiptap/core';
 import { formatDate, shortDate, weekdayDate } from './dates';
-import { tagOf } from './editor/decorations';
+import { afterTag, splitTag } from './task';
 import { createPreviewEditor } from './editor/editors';
 import type { Host } from './host';
 import { parseInline } from './markdown/inline';
@@ -264,7 +264,7 @@ export class SearchView {
         const tag = el('span', 'tag');
         appendMarked(tag, hit.tag, this.find);
         fill.append(tag);
-        title = title.slice(hit.tag.length + 1).trimStart();
+        title = afterTag(title, hit.tag);
       }
     }
 
@@ -396,12 +396,8 @@ export class SearchView {
           item.relation === 'blockedBy' ? 'Blocked by' : item.relation === 'blocks' ? 'Blocks' : item.kind === 'note' ? `Note on ${shortDate(item.date, today)}:` : 'Task';
         row.append(`› ${lead} `);
 
-        let title = plain(item.title);
-        const tag = item.kind === 'task' ? tagOf(title) : null;
-        if (tag) {
-          row.append(el('span', 'tag', tag));
-          title = title.slice(tag.length + 1).trimStart();
-        }
+        const { tag, title } = item.kind === 'task' ? splitTag(plain(item.title)) : { tag: null, title: plain(item.title) };
+        if (tag) row.append(el('span', 'tag', tag));
         row.append(el('span', item.done ? 'rel-name done' : 'rel-name', title || (item.kind === 'task' ? 'No title' : 'No heading')));
 
         const details = [item.ticket, item.done ? 'done' : null].filter(Boolean);

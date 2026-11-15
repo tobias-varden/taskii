@@ -8,6 +8,7 @@ import { Extension } from '@tiptap/core';
 import { Fragment, type Node as PMNode, type Schema } from '@tiptap/pm/model';
 import { Selection, TextSelection, type EditorState, type Transaction } from '@tiptap/pm/state';
 import { MAX_INDENT } from '../markdown/body';
+import { FIELD, doneField } from '../task';
 import type { TaskField } from '../types';
 import { localStamp, newTaskId } from './ids';
 
@@ -80,7 +81,7 @@ function rebuild(owner: PMNode, title: Fragment, lines: PMNode[]): PMNode {
 }
 
 function newTask(schema: Schema, title: Fragment, lines: PMNode[] = [], done = false): PMNode {
-  const fields: TaskField[] = done ? [{ key: 'done', value: localStamp() }] : [];
+  const fields: TaskField[] = done ? [doneField(localStamp())] : [];
   const children = [schema.nodes.taskTitle.create(null, title)];
   if (lines.length) children.push(schema.nodes.body.create(null, lines));
   return schema.nodes.task.create({ id: newTaskId(), done, fields }, children);
@@ -312,8 +313,8 @@ export function toggleTask(tr: Transaction, pos: number): Transaction {
   const node = tr.doc.nodeAt(pos);
   if (node?.type.name !== 'task') return tr;
   const done = !node.attrs.done;
-  const fields = (node.attrs.fields as TaskField[]).filter((f) => f.key !== 'done');
-  if (done) fields.push({ key: 'done', value: localStamp() });
+  const fields = (node.attrs.fields as TaskField[]).filter((f) => f.key !== FIELD.done);
+  if (done) fields.push(doneField(localStamp()));
   return tr.setNodeMarkup(pos, undefined, { ...node.attrs, done, fields });
 }
 

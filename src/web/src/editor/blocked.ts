@@ -7,17 +7,9 @@ import { Extension, type Editor } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { parseInline } from '../markdown/inline';
+import { FIELD, blockerOf, splitTag } from '../task';
 import type { TaskField } from '../types';
-import { tagOf } from './decorations';
 import { newTaskId } from './ids';
-
-const FIELD = 'blocked-by';
-
-/** The ID of the task these fields say to wait for. */
-export function blockerOf(fields: readonly TaskField[] | undefined): string | null {
-  const value = fields?.find((field) => field.key === FIELD)?.value.replace(/^\^/, '');
-  return value || null;
-}
 
 export interface OpenTask {
   id: string;
@@ -62,8 +54,8 @@ function find(editor: Editor, taskId: string): { pos: number; index: number } | 
 }
 
 function withBlocker(fields: readonly TaskField[], blockerId: string | null): TaskField[] {
-  const rest = fields.filter((field) => field.key !== FIELD);
-  return blockerId ? [...rest, { key: FIELD, value: '^' + blockerId }] : rest;
+  const rest = fields.filter((field) => field.key !== FIELD.blockedBy);
+  return blockerId ? [...rest, { key: FIELD.blockedBy, value: '^' + blockerId }] : rest;
 }
 
 /** Makes a task wait for another, or for nothing when `blockerId` is null. */
@@ -125,11 +117,10 @@ export const Blocked = Extension.create<BlockedOptions>({
     const { openTitle, pick } = this.options;
 
     const label = (taskId: string, title: string) => () => {
-      const tag = tagOf(title);
       const el = document.createElement('span');
       el.className = 'blocked-by';
       el.contentEditable = 'false';
-      el.textContent = `blocked by ${tag ? title.slice(tag.length + 1).trimStart() : title}`;
+      el.textContent = `blocked by ${splitTag(title).title}`;
       if (editor.isEditable) {
         el.title = 'Change what this waits for (Alt+B)';
         el.addEventListener('mousedown', (event) => {

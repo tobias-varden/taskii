@@ -3,7 +3,7 @@
 import type { Editor } from '@tiptap/core';
 import { BlockerPicker } from './blockerPicker';
 import { agesByKey } from './editor/ages';
-import { addBlocker, blockerOf, candidates, openTasks, setBlocker } from './editor/blocked';
+import { addBlocker, candidates, openTasks, setBlocker } from './editor/blocked';
 import { Originals } from './editor/convert';
 import { CardDrag, addCard, addSide, timeHeading } from './editor/board';
 import { TaskDrag } from './editor/drag';
@@ -15,6 +15,7 @@ import { formatDate } from './dates';
 import type { Host } from './host';
 import { SearchView } from './search';
 import { StandupView } from './standup';
+import { blockerOf } from './task';
 import type { DayContent, DayDto } from './types';
 
 /** How long after the last keystroke the day is written. */

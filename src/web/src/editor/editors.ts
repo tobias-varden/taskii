@@ -15,7 +15,8 @@ import { Originals, docToNotes, docToTasks, notesToDoc, tasksToDoc, type NodeJSO
 import { Ages } from './ages';
 import { Blocked, type BlockedOptions } from './blocked';
 import { Board, type BoardOptions } from './board';
-import { Found, Ghost, Marks, UniqueIds, tagOf } from './decorations';
+import { Found, Ghost, Marks, UniqueIds } from './decorations';
+import { tagOf } from '../task';
 import { Grips, type DropIndex, type GripOptions } from './drag';
 import { Fold } from './fold';
 import { newTaskId } from './ids';

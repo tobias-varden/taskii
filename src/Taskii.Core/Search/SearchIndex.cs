@@ -404,9 +404,8 @@ public sealed class SearchIndex : IDisposable
                 // A line typed into the file by hand has no ID yet. Its title has to do.
                 var key = task.Id.Length > 0 ? "t:" + task.Id : "t~" + Hash(task.Title);
                 var hash = Hash(key, section, DayFormat.Task(task));
-                var refs = task.Fields
-                    .Where(field => field.Key == "blocked-by" && field.Value.TrimStart('^').Length > 0)
-                    .Select(field => BlockerPrefix + field.Value.TrimStart('^'))
+                var refs = TaskFields.BlockersOf(task)
+                    .Select(id => BlockerPrefix + id)
                     .Concat(TicketRefs.In(task.Title + '\n' + task.Body).Select(ticket => TicketPrefix + ticket));
                 Add(db, date, key, hash, ItemKind.Task, TaskTags.Of(task.Title), task.Done, task.Title, task.Body, new ItemVersion(section, task, null), refs);
             }
