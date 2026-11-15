@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Taskii.Core;
 
 namespace Taskii.App;
 
@@ -46,16 +47,10 @@ public sealed class SettingsStore
         Current = Load();
     }
 
-    /// <summary>
-    /// The folder for settings, the log and the browser profile. TASKII_HOME moves it, which
-    /// lets a development copy run beside the real one without sharing anything.
-    /// </summary>
-    public static string Home { get; } = Path.GetFullPath(
-        Environment.GetEnvironmentVariable("TASKII_HOME") is { Length: > 0 } home
-            ? home
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Taskii"));
+    /// <summary>The folder for settings, the log and the browser profile.</summary>
+    public static string Home => TaskiiHome.Folder;
 
-    private static string FilePath => Path.Combine(Home, "settings.json");
+    private static string FilePath => TaskiiHome.SettingsFile;
 
     public AppSettings Current { get; }
 

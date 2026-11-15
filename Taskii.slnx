@@ -3,9 +3,11 @@
     <Project Path="src/Taskii.App/Taskii.App.csproj">
       <Platform Project="x64" />
     </Project>
+    <Project Path="src/Taskii.Cli/Taskii.Cli.csproj" />
     <Project Path="src/Taskii.Core/Taskii.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Taskii.Cli.Tests/Taskii.Cli.Tests.csproj" />
     <Project Path="tests/Taskii.Core.Tests/Taskii.Core.Tests.csproj" />
   </Folder>
 </Solution>
