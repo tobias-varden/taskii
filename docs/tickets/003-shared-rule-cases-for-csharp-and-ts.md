@@ -59,5 +59,4 @@ add to.
 
 - `doneAt` is deliberately different: TS compares raw stamps as text, C# parses them. Test
   only the inputs where both have to agree, such as which field is picked when there are two.
-- `TicketRefs` has no TS copy since ticket [001](001-mock-host-stops-reimplementing-search.md)
-  removes the mock's. If that ticket hasn't landed yet, add ticket cases here too.
+- `TicketRefs` needs no cases here: the mock host's copy is gone, so it has no TS twin.
