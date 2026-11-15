@@ -397,9 +397,9 @@ public sealed class SearchIndexTests : IDisposable
         Assert.Single(index.Search(new SearchQuery { Text = "contoso" }).Hits);
     }
 
+    // How what is typed splits into words is in the shared cases (RuleCaseTests).
     [Theory]
     [InlineData("", null)]
-    [InlineData("  -- ", null)]
     [InlineData("Contoso", "\"Contoso\"*")]
     [InlineData("AB#4521 fix", "\"AB\"* \"4521\"* \"fix\"*")]
     [InlineData("\"quoted\" OR", "\"quoted\"* \"OR\"*")]

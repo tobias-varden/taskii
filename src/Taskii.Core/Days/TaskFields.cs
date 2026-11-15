@@ -4,7 +4,7 @@ namespace Taskii.Core.Days;
 
 /// <summary>
 /// The inline fields Taskii itself writes on a task, and what they say. The same rules as the
-/// page's task.ts.
+/// page's task.ts; the cases both are tested on are in tests/rules/cases.json.
 /// </summary>
 public static class TaskFields
 {

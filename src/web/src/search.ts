@@ -41,7 +41,10 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', text 
   return node;
 }
 
-/** The words of a query, split the way the index splits text. */
+/**
+ * The words of a query, split the way the index's tokenizer splits text: letters and numbers of any
+ * kind. The same rule as SearchIndex.TermsOf; the cases both are tested on are in tests/rules/cases.json.
+ */
 export function termsOf(text: string): string[] {
   return text.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 }

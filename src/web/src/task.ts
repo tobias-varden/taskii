@@ -1,6 +1,6 @@
 // What a task's title and fields mean: its tag, what it waits for, when it was done.
 // No DOM and no editor here, so any part of the page can use it. Taskii.Core has the same
-// rules in TaskTags and TaskFields.
+// rules in TaskTags and TaskFields; the cases both are tested on are in tests/rules/cases.json.
 
 import type { TaskField } from './types';
 
@@ -34,7 +34,7 @@ export function splitTag(title: string): { tag: string | null; title: string } {
 export function blockersOf(fields: readonly TaskField[] | undefined): string[] {
   return (fields ?? [])
     .filter((field) => field.key === FIELD.blockedBy)
-    .map((field) => field.value.replace(/^\^/, ''))
+    .map((field) => field.value.replace(/^\^+/, ''))
     .filter(Boolean);
 }
 

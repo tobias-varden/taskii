@@ -4,7 +4,8 @@ namespace Taskii.Core.Days;
 
 /// <summary>
 /// The tag of a task is the text before the first colon in its title: "ACME" in
-/// "ACME: Fix users". The same rule as tagOf in the page's decorations.ts.
+/// "ACME: Fix users". The same rule as tagOf in the page's task.ts; the cases both are
+/// tested on are in tests/rules/cases.json.
 /// </summary>
 public static partial class TaskTags
 {

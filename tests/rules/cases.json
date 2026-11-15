@@ -1,0 +1,53 @@
+{
+  "$comment": "Rules about task text that both C# (Taskii.Core) and the page (src/web) implement. Both test suites run every case here: RuleCaseTests.cs and rules.test.ts. Add a case here, not to either side alone.",
+
+  "tag": [
+    { "title": "ACME: Fix users", "tag": "ACME" },
+    { "title": "Portal infra: Use refresh tokens", "tag": "Portal infra" },
+    { "title": "A: B: C", "tag": "A" },
+    { "title": "ACME:", "tag": "ACME" },
+    { "title": "Fix: see https://example.com", "tag": "Fix" },
+    { "title": "ABCDEFGHIJKLMNOPQRSTUVWX: 24 characters", "tag": "ABCDEFGHIJKLMNOPQRSTUVWX" },
+    { "title": "ABCDEFGHIJKLMNOPQRSTUVWXY: 25 characters", "tag": null },
+    { "title": "ACME:no space", "tag": null },
+    { "title": " ACME: leading space", "tag": null },
+    { "title": "https://example.com", "tag": null },
+    { "title": "Read https: later", "tag": null },
+    { "title": "HTTP: is a link too", "tag": null },
+    { "title": "No tag here", "tag": null },
+    { "title": "", "tag": null }
+  ],
+
+  "blockers": [
+    { "fields": [["blocked-by", "^c9d0"], ["blocked-by", ""]], "ids": ["c9d0"] },
+    { "fields": [["done", "2026-11-16T08:40"], ["blocked-by", "^c9d0"]], "ids": ["c9d0"] },
+    { "fields": [["blocked-by", "^a"], ["blocked-by", ""], ["blocked-by", "b"]], "ids": ["a", "b"] },
+    { "fields": [["blocked-by", "^"]], "ids": [] },
+    { "fields": [["blocked-by", "^^x"]], "ids": ["x"] },
+    { "fields": [["Blocked-By", "^x"]], "ids": [] },
+    { "fields": [], "ids": [] }
+  ],
+
+  "doneAt": [
+    { "$comment": "Only inputs both sides must agree on: C# parses the stamp, the page keeps it as text." },
+    { "fields": [["done", "2026-11-15T09:00"], ["done", "2026-11-16T08:40"]], "stamp": "2026-11-16T08:40" },
+    { "fields": [["blocked-by", "^x"], ["done", "2026-11-16T08:40"]], "stamp": "2026-11-16T08:40" },
+    { "fields": [["blocked-by", "^x"]], "stamp": null },
+    { "fields": [], "stamp": null }
+  ],
+
+  "terms": [
+    { "$comment": "Words split the way the index's unicode61 tokenizer does: letters and numbers of any kind, whole code points." },
+    { "query": "contoso-edu client", "terms": ["contoso", "edu", "client"] },
+    { "query": "AB#4521 fix", "terms": ["AB", "4521", "fix"] },
+    { "query": "\"quoted\" OR", "terms": ["quoted", "OR"] },
+    { "query": "a_b", "terms": ["a", "b"] },
+    { "query": "x² ½ Ⅻ", "terms": ["x²", "½", "Ⅻ"] },
+    { "query": "café", "terms": ["café"] },
+    { "query": "café", "terms": ["cafe"], "$comment": "A combining accent is not part of a word; the tokenizer drops it." },
+    { "query": "𝐀bc", "terms": ["𝐀bc"] },
+    { "query": "★ 😀x", "terms": ["x"] },
+    { "query": "  -- ", "terms": [] },
+    { "query": "", "terms": [] }
+  ]
+}

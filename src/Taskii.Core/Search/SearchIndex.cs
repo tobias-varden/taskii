@@ -367,25 +367,35 @@ public sealed class SearchIndex : IDisposable
     /// </summary>
     internal static string? MatchExpression(string? text)
     {
-        if (string.IsNullOrWhiteSpace(text)) return null;
+        var terms = TermsOf(text);
+        return terms.Count == 0 ? null : string.Join(' ', terms.Select(term => $"\"{term}\"*"));
+    }
 
-        // The same split the tokenizer makes, so "AB#4521" looks for "AB" and "4521".
+    /// <summary>
+    /// The words in what was typed, split the way the unicode61 tokenizer splits text, so
+    /// "AB#4521" looks for "AB" and "4521". Letters and numbers of any kind (², ½ and Ⅻ too) are
+    /// part of a word, read as whole code points. The same rule as termsOf in the page's
+    /// search.ts; the cases both are tested on are in tests/rules/cases.json.
+    /// </summary>
+    internal static IReadOnlyList<string> TermsOf(string? text)
+    {
         var terms = new List<string>();
         var word = new StringBuilder();
-        foreach (var c in text + " ")
+        foreach (var rune in (text ?? "").EnumerateRunes())
         {
-            if (char.IsLetterOrDigit(c))
+            if (Rune.IsLetter(rune) || Rune.IsNumber(rune))
             {
-                word.Append(c);
+                word.Append(rune.ToString());
             }
             else if (word.Length > 0)
             {
-                terms.Add($"\"{word}\"*");
+                terms.Add(word.ToString());
                 word.Clear();
             }
         }
 
-        return terms.Count == 0 ? null : string.Join(' ', terms);
+        if (word.Length > 0) terms.Add(word.ToString());
+        return terms;
     }
 
     // ---- writing ----
